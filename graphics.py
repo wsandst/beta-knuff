@@ -23,10 +23,12 @@ empty_board = """            ┌──┬──┬──┐
             └──┴──┴──┘	            
 """
 
-piece_pos_map = []
+piece_pos_map = [(14, 19), (14, 17), (14, 15)]
 
 def showboard():
     board = list(empty_board)
-    x,y,char = input().split(',')
-    board[int(y) * 34 + int(x)] = char
+    i = 0
+    for x,y in piece_pos_map:
+        board[y*35 + x] = str(i)
+        i += 1
     print("".join(board))
