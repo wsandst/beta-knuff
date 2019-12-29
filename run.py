@@ -1,8 +1,8 @@
 import graphics
 
 def main():
-    graphics.showboard()
-    input()
-
+    while True:
+        graphics.showboard()
+    
 if __name__ == "__main__":
     main()
