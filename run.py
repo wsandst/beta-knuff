@@ -1,7 +1,9 @@
 import graphics
+from board import Board
 
 def main():
-    graphics.showboard()
+    board = Board()
+    board.print_data()
     input()
     
 if __name__ == "__main__":

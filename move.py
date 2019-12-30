@@ -1,0 +1,1 @@
+#Helper functions for the integer move object. Not a class due to performance reasons, Python classes are slow.
