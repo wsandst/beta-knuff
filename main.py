@@ -23,7 +23,7 @@ def parse(input_list):
     flags = {}
     if len(input_list) > 1:
         i = 1
-        while i < len(input_list) and input_list[i][0] != '-':
+        while i < len(input_list) and not (input_list[i][0] == '-' and input_list[i][1].isalpha()):
             flags.setdefault("default", [])
             flags["default"].append(input_list[i])
             i += 1
@@ -55,6 +55,7 @@ def main():
     add_command("reset", lambda: cmd_reset(main_board, flags))
     add_command("roll", lambda: cmd_roll(main_board, flags))
     add_command("set", lambda: cmd_set(main_board, flags))
+    add_command("move", lambda: cmd_move(main_board, flags))
 
     print(init_message)
 

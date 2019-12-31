@@ -29,6 +29,7 @@ class Board:
         self.exit_states = copy.deepcopy(exit_states)
         self.start_counts = copy.deepcopy(start_counts)
         self.roll_dice()
+        self.active_player = 1
 
     def move(self, move):
         #Retrieve move attributes for readability. Is a class such a bad idea? At least for readability, could do performance test

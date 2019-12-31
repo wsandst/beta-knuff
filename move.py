@@ -1,6 +1,6 @@
 #Helper functions for the tuple move object. Not a class due to performance reasons, Python classes are slow.
 #Move object
-#Tuple: (fromindex [tuple], toindex [tuple], piecefrom [tuple], pieceto [tuple])
+#List: (fromindex [tuple], toindex [tuple], piecefrom [tuple], pieceto [tuple])
 #Indices: tuple of (x, y) where x identifies which list (board_state, exit_states[4] or start_counts) and y is the index of the list.
 #0 is board_state, 1-4 is exit_states. -1 represents the starting area
 #Piece format: Tuple of format (x,y) (ex (1,4)), where the x is piececount and y is player
