@@ -23,7 +23,7 @@ def parse(input_list):
     flags = {}
     if len(input_list) > 1:
         i = 1
-        while input_list[i][0] != '-':
+        while i < len(input_list) and input_list[i][0] != '-':
             flags.setdefault("default", [])
             flags["default"].append(input_list[i])
             i += 1
@@ -54,6 +54,7 @@ def main():
     add_command(["display", "disp", "d"], lambda: cmd_display(main_board, flags))
     add_command("reset", lambda: cmd_reset(main_board, flags))
     add_command("roll", lambda: cmd_roll(main_board, flags))
+    add_command("set", lambda: cmd_set(main_board, flags))
 
     print(init_message)
 
@@ -62,7 +63,6 @@ def main():
         flags = parse(input_list)
         command = input_list[0]
         if command in commands:
-            pass
             commands[command]()
         else:
             print("The command was not recognized. Type 'help' for a list of commands")

@@ -49,20 +49,35 @@ def display_board(current_board):
     board_str = list(empty_board_str)
 
     i = 0
-    for piece in current_board.board_state:
-        if piece == 0:
+    for piece in current_board.board_state: #Board Main state visualisation
+        if piece[0] == 0:
             i += 1
             continue
-        if (piece > 20): #This position has more than 1 piece
+        if (piece[0] > 1): #This position has more than 1 piece
             pos = piece_pos_map[i]
-            set_board_value(board_str, pos, str(piece)[1])
+            set_board_value(board_str, pos, str(piece[1]))
             pos2 = (pos[0] - 1, pos[1])
-            set_board_value(board_str, pos2, str(piece)[0])
+            set_board_value(board_str, pos2, str(piece[0]))
         else:
-            if (piece > 10):
-                set_board_value(board_str, piece_pos_map[i], str(piece)[1])
+            if (piece[0] > 1):
+                set_board_value(board_str, piece_pos_map[i], str(piece[1]))
             else: #This should never trigger, but is useful to prevent crash during simple number testing
-                set_board_value(board_str, piece_pos_map[i], str(piece)[0])
+                set_board_value(board_str, piece_pos_map[i], str(piece[0]))
         i += 1
+
+    j = 0
+    for exit_state in current_board.exit_states: #Board Exit state visualisation
+        i = 0
+        for piece in exit_state:
+            if piece[1] != 0:
+                if piece[0] > 1: #More than one piece
+                    pos = exit_pos_map[j][i]
+                    set_board_value(board_str, pos, str(piece[1]))
+                    pos2 = (pos[0] - 1, pos[1])
+                    set_board_value(board_str, pos2, str(piece[0]))
+                else:
+                    set_board_value(board_str, exit_pos_map[j][i], str(piece[1]))
+            i += 1
+        j += 1
 
     print("".join(board_str))
