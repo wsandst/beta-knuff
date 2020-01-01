@@ -20,11 +20,11 @@ set <pos> <player> [count]          Add a piece on the board, with no regards to
 
 def cmd_display(current_board, flags):
     #cmd: display [-a]
-    if ('a' in flags):
-        graphics.display_board(current_board)
+    graphics.display_board(current_board)
+    if 'a' in flags:
         current_board.print_data()
-    else:
-        graphics.display_board(current_board)
+    if 'p' in flags:
+        current_board.print_active_pieces()
 
 def cmd_reset(current_board, flags):
     #cmd: reset
@@ -82,12 +82,12 @@ def cmd_move(current_board, flags):
             mv.to_index = new_index
             mv.to_state_loc = 0
             mv.to_count, mv.to_player = current_board.board_state[mv.to_index]
-        elif pos >= 40 and pos < 56:
-            index = (pos - 40) % 4
-            area = (pos - 40) // 4
+        elif new_index >= 40 and new_index < 56:
+            index = (new_index - 40) % 4
+            area = (new_index - 40) // 4
             mv.to_state_loc = area+1
             mv.to_index = index
-            mv.to_count, mv.to_player = current_board.exit_states[area]
+            mv.to_count, mv.to_player = current_board.exit_states[area][index]
         if "f" not in flags and current_board.board_state[mv.from_index][1] == 0:
             error_message("Invalid move - no piece in selected square")
             return
@@ -120,12 +120,12 @@ def cmd_move(current_board, flags):
         mv.from_player = current_board.active_player
         mv.from_state_loc = -mv.from_player
         mv.to_state_loc = 0
-        mv.to_index = roll - 1
+        mv.to_index = (mv.from_player - 1) * 10 + roll - 1
         mv.to_count, mv.to_player = current_board.board_state[mv.to_index]
         if "f" not in flags and current_board.start_counts[mv.from_player-1] == 0:
             error_message("Invalid move - no piece in start area")
             return
-        if "f" not in flags and (roll != 6 or roll != 1):
+        if "f" not in flags and (roll != 6 and roll != 1):
             error_message("Invalid move - must have 6 or 1 to move out from start area")
             return
 
@@ -134,6 +134,9 @@ def cmd_move(current_board, flags):
     print(', '.join("%s: %s" % item for item in attrs.items()))
 
     current_board.move(mv)
+
+    print("New roll:", current_board.roll)
+    print("Active player:", current_board.active_player)
 
 def cmd_set(current_board, flags):
     #cmd: set <pos> <player> [count]
@@ -162,6 +165,7 @@ def cmd_pass(current_board, flags):
     #cmd pass
     current_board.progress_turn()
     print("Turn passed.")
+    print("New roll:", current_board.roll)
     print("Active player:", current_board.active_player)
 
 def error_message(reason):
