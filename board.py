@@ -24,37 +24,41 @@ class Board:
     def roll_dice(self):
         self.roll = randrange(1,7)
 
-    def __init__(self, board_state = starting_board_state, exit_states = starting_exit_states, start_counts = starting_start_counts):
+    def __init__(self, player_count = 4, board_state = starting_board_state, exit_states = starting_exit_states, start_counts = starting_start_counts):
+        self.player_count = player_count
         self.board_state = copy.deepcopy(board_state)
         self.exit_states = copy.deepcopy(exit_states)
         self.start_counts = copy.deepcopy(start_counts)
         self.roll_dice()
         self.active_player = 1
+        self.ply_count = 1
 
-    def move(self, move):
+    def move(self, mv):
         #Retrieve move attributes for readability. Is a class such a bad idea? At least for readability, could do performance test
-        from_player = get_from_player(move)
-        from_count = get_from_count(move)
-        from_index = get_from_index(move)
-        from_state_loc = get_from_state_loc(move)
+        if mv.from_state_loc == -1: #Move out piece from starting area
+            self.start_counts[mv.from_player-1] -= 1
+            if mv.to_player == 0: #Empty square
+                self.board_state[mv.to_index] = (1, mv.from_player)
+            elif mv.to_player == mv.from_player: #Same player in both squares!
+                self.board_state[mv.to_index] = (mv.to_count+1,mv.from_player)
+            else: #Took a piece
+                self.start_counts[mv.to_player-1] += 1 #Increment taken players start area
+                self.board_state[mv.to_index] = (1, mv.from_player)
+        elif mv.from_state_loc == 0: #Moving on the standard board
+            if mv.to_state_loc == 0: #Moving to a square on the standard board
+                if mv.to_player == 0: #Empty square
+                    self.board_state[mv.to_index] = (1, mv.from_player)
+                elif mv.to_player == mv.from_player: #Same player in both squares!
+                    self.board_state[mv.to_index] = (mv.to_count+1,mv.from_player)
+                else: #Took a piece
+                    self.start_counts[mv.to_player-1] += 1 #Increment taken players start area
+                    self.board_state[mv.to_index] = (1, mv.from_player)
+                if mv.from_count > 1: #Remove moving piece from from pos
+                    self.board_state[mv.from_index] = (mv.from_count-1, mv.from_player)
+                else:
+                    self.board_state[mv.from_index] = (0,0)
 
-        to_player = get_to_player(move)
-        to_count = get_from_count(move)
-        to_index = get_to_index(move)
-        to_state_loc = get_to_state_loc(move)
-
-
-        if from_state_loc == -1: #Move out piece from starting area
-            self.start_counts[from_player] -= 1
-            if to_player == from_player: #Same player in both squares!
-                self.board_state[to_index] = (to_count+1,from_player)
-            else: #Took a piece!
-                self.start_counts[to_player] += 1 #Increment taken players start area
-                self.board_state[move[1][1]] = (1, from_player)
-
-        elif move[0][0] == 0:
-            if move[1][0] == 0:
-                pass
+        self.progress_turn()
 
     def unmove(self, move):
         pass
@@ -62,6 +66,11 @@ class Board:
     def generate_moves(self, player, roll):
         pass
 
+    def progress_turn(self):
+        self.active_player = self.ply_count % (self.player_count) + 1
+        self.ply_count += 1
+        self.roll_dice()
+ 
     def print_data(self):
         print("Board state:")
         print(self.board_state)
@@ -69,4 +78,5 @@ class Board:
         print(self.exit_states)
         print("Pieces yet to start:")
         print(self.start_counts)
-        print("Current roll: ", self.roll)
+        print("Current roll:", self.roll)
+        print("Current turn:", self.active_player, "at ply:", self.ply_count)

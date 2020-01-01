@@ -51,16 +51,18 @@ def main():
     flags = {}
 
     add_command(["help", "h"], lambda: cmd_help(flags))
+    add_command("exit", lambda: cmd_exit(flags))
     add_command(["display", "disp", "d"], lambda: cmd_display(main_board, flags))
     add_command("reset", lambda: cmd_reset(main_board, flags))
     add_command("roll", lambda: cmd_roll(main_board, flags))
     add_command("set", lambda: cmd_set(main_board, flags))
-    add_command("move", lambda: cmd_move(main_board, flags))
+    add_command(["move", "mv"], lambda: cmd_move(main_board, flags))
+    add_command("pass", lambda: cmd_pass(main_board, flags))
 
     print(init_message)
 
     while True:
-        input_list = input("Bknuff: ").split()
+        input_list = input("\nBknuff: ").split()
         flags = parse(input_list)
         command = input_list[0]
         if command in commands:

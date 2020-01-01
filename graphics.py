@@ -59,10 +59,7 @@ def display_board(current_board):
             pos2 = (pos[0] - 1, pos[1])
             set_board_value(board_str, pos2, str(piece[0]))
         else:
-            if (piece[0] > 1):
-                set_board_value(board_str, piece_pos_map[i], str(piece[1]))
-            else: #This should never trigger, but is useful to prevent crash during simple number testing
-                set_board_value(board_str, piece_pos_map[i], str(piece[0]))
+            set_board_value(board_str, piece_pos_map[i], str(piece[1]))
         i += 1
 
     j = 0

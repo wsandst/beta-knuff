@@ -1,4 +1,4 @@
-import board, graphics
+import board, graphics, move
 import copy
 
 #List of commands
@@ -8,8 +8,9 @@ help                                Lists commands for BetaKnuff
 display [-a]                        Displays the current game board and state. -e prints additional info
 reset                               Resets the main board to start
 roll [-f num]                       Display the roll for this turn. -f forces a reroll to specified number
-move <pos> [-d distance]            Move piece on pos with current roll. -d to override roll. pos is -1 starting area, 0-40 main board, 41-52 exit area
+move <pos> [-d distance] [-f]       Move piece on pos with current roll. -d to override roll. -f to ignore restrictions. pos: -1 starting area, 0-40 main board, 41-52 exit area
 moves                               Lists valid moves this turn
+pass                                Skips this players turn. Used when no moves are available
 set <pos> <player> [count]          Add a piece on the board, with no regards to the game rules
 """
 
@@ -33,68 +34,106 @@ def cmd_reset(current_board, flags):
     current_board.roll_dice()
 
 def cmd_roll(current_board, flags):
-    #cmd: roll
+    #cmd: roll [-f roll]
     if "f" in flags:
-        current_board.roll = flags["f"]
+        current_board.roll = int(flags["f"])
     print("Roll: ", current_board.roll)
+
+def cmd_turn(current_board, flags):
+    #cmd: turn [-f turn]
+    if "f" in flags:
+        current_board.active_player = int(flags["f"])
+    print("Turn: ", current_board.active_player)
 
 def cmd_help(flags):
     #cmd: help
     print(command_list)
 
+def cmd_exit(flags):
+    #cmd: exit
+    print("Exiting BetaKnuff...")
+    exit()
+
 def cmd_move(current_board, flags):
     #cmd: move <pos> [-d distance]
     if "default" not in flags or len(flags["default"]) < 1:
         error_message("The required arguments are missing or are incorrectly formated")
-    pos = int(flags["default"])
+        return
+    if flags["default"] == "start":
+        pos = -1
+    elif flags["default"] == "pass":
+        cmd_pass(current_board, flags)
+        return
+    else:
+        pos = int(flags["default"])
 
-    from_player = 0
-    from_count = 0
-    from_index = 0
-    from_state_loc = 0
+    mv = move.Move()
 
-    to_player = 0
-    to_count = 1
-    to_index = 0
-    to_state_loc = 0
+    roll = current_board.roll
+    if "d" in flags:
+        roll = int(flags["d"])
 
     if pos < 40 and pos >= 0:
-        from_state_loc = 1
-        from_index = pos
-        from_count, from_player = current_board.board_state[pos]
-        new_index = from_index + current_board.roll
+        mv.from_state_loc = 0
+        mv.from_index = pos
+        mv.from_count, mv.from_player = current_board.board_state[pos]
+        new_index = mv.from_index + roll
         if new_index < 40 and new_index >= 0:
-            to_index = new_index
-            to_state_loc = 1
-            to_player, to_count = current_board.board_state[to_index]
+            mv.to_index = new_index
+            mv.to_state_loc = 0
+            mv.to_count, mv.to_player = current_board.board_state[mv.to_index]
         elif pos >= 40 and pos < 56:
             index = (pos - 40) % 4
             area = (pos - 40) // 4
-            to_state_loc = area+1
-            to_index = index
-            to_player, to_count = current_board.exit_states[area]
+            mv.to_state_loc = area+1
+            mv.to_index = index
+            mv.to_count, mv.to_player = current_board.exit_states[area]
+        if "f" not in flags and current_board.board_state[mv.from_index][1] == 0:
+            error_message("Invalid move - no piece in selected square")
+            return
+        if "f" not in flags and mv.from_player != current_board.active_player:
+            error_message("Invalid move - piece does not belong to active player! (use -f to circumvent limit)")
+            return
+
 
     elif pos >= 40 and pos < 56: #Exit area
         index = (pos - 40) % 4
         area = (pos - 40) // 4
-        from_state_loc = area+1
-        from_index = index
-        from_player, from_count = current_board.exit_states[area]
-        to_index = index + current_board.roll
-        to_state_loc = from_state_loc
-        if (to_index < 5):
-            to_player, to_count = current_board.exit_states[area][to_index]
+        mv.from_state_loc = area+1
+        mv.from_index = index
+        mv.from_count, mv.from_player = current_board.exit_states[area][index]
+        mv.to_index = index + roll
+        mv.to_state_loc = mv.from_state_loc
+        if mv.to_index < 4:
+            mv.to_count, mv.to_player = current_board.exit_states[area][mv.to_index]
+        elif mv.to_index == 4: #Exit move!
+            mv.to_player = 0
+            mv.to_count = 0
+        if "f" not in flags and current_board.exit_states[area][mv.from_index][1] == 0:
+            error_message("Invalid move - no piece in selected exit square")
+            return
+        if "f" not in flags and mv.from_player != current_board.active_player:
+            error_message("Invalid move - piece does not belong to active player! (use -f to circumvent limit)")
+            return
 
     elif pos == -1:
-        from_player = current_board.active_player
-        from_state_loc = -from_player
-        to_state_loc = 1
-        to_index = current_board.roll - 1
-        to_player, to_count = current_board.board_state[to_index]
+        mv.from_player = current_board.active_player
+        mv.from_state_loc = -mv.from_player
+        mv.to_state_loc = 0
+        mv.to_index = roll - 1
+        mv.to_count, mv.to_player = current_board.board_state[mv.to_index]
+        if "f" not in flags and current_board.start_counts[mv.from_player-1] == 0:
+            error_message("Invalid move - no piece in start area")
+            return
+        if "f" not in flags and (roll != 6 or roll != 1):
+            error_message("Invalid move - must have 6 or 1 to move out from start area")
+            return
 
-    move = [(from_state_loc, from_index), (to_state_loc, to_index), (from_count, from_player), (to_count, to_player)]
-    print(move)
-    current_board.move(move)
+
+    attrs = vars(mv)
+    print(', '.join("%s: %s" % item for item in attrs.items()))
+
+    current_board.move(mv)
 
 def cmd_set(current_board, flags):
     #cmd: set <pos> <player> [count]
@@ -119,6 +158,11 @@ def cmd_set(current_board, flags):
     else:
         error_message("The required arguments are missing or are incorrectly formated")
 
+def cmd_pass(current_board, flags):
+    #cmd pass
+    current_board.progress_turn()
+    print("Turn passed.")
+    print("Active player:", current_board.active_player)
 
 def error_message(reason):
     print("Command failure: " + reason + ". Please try again.")
