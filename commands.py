@@ -9,7 +9,7 @@ display [-a]                        Displays the current game board and state. -
 reset                               Resets the main board to start
 roll [-f num]                       Display the roll for this turn. -f forces a reroll to specified number
 move <pos> [-d distance] [-f]       Move piece on pos with current roll. -d to override roll. -f to ignore restrictions. pos: -1 starting area, 0-40 main board, 41-52 exit area
-moves                               Lists valid moves this turn
+moves [player] [roll]               Lists valid moves this turn
 pass                                Skips this players turn. Used when no moves are available
 set <pos> <player> [count]          Add a piece on the board, with no regards to the game rules
 """
@@ -137,6 +137,26 @@ def cmd_move(current_board, flags):
 
     print("New roll:", current_board.roll)
     print("Active player:", current_board.active_player)
+
+def cmd_moves(current_board, flags):
+    #cmd: moves
+    player = None
+    roll = None
+    if "default" in flags:
+        if len(flags["default"]) == 1:
+            player = int(flags["default"][0])
+        elif len(flags["default"] == 2):
+            player = int(flags["default"][0])
+            roll = int(flags["default"][1])
+    else:
+        moves = current_board.generate_moves(player, roll)
+    
+
+
+    print("Legal moves for Player", current_board.active_player, "with Roll", current_board.roll)
+    for mv in moves:
+        attrs = vars(mv)
+        print(', '.join("%s: %s" % item for item in attrs.items()))
 
 def cmd_set(current_board, flags):
     #cmd: set <pos> <player> [count]

@@ -91,8 +91,44 @@ class Board:
     def unmove(self, move):
         pass
 
-    def generate_moves(self, player, roll):
-        pass
+    def generate_moves(self, player = None, roll = None):
+        #Generate valid moves for the current active player and roll, returning a List of Move
+        
+        if player is None:
+            player = self.active_player
+        if roll is None:
+            roll = self.roll
+
+        moves = []
+
+        i = 0
+
+        for piece in self.board_state:
+            if piece[1] == player:
+                to_pos = i + roll
+                if i + roll < 40: #Moving to main state
+                    to_count, to_player = self.board_state[to_pos]
+                    mv = Move(piece[0], piece[1], 0, i, to_count, to_player, 0, to_pos)
+                    moves.append(mv)
+                else: #Moving to exit states
+                    to_index = (to_pos - 40) % 4
+                    area = (to_pos - 40) // 4
+                    pass
+            i += 1    
+
+
+        for piece in self.exit_states:
+            pass
+
+        if self.start_counts[player-1] > 0 and (roll == 1 or roll == 6):
+            index = (player- 1) * 10 + self.roll - 1
+            to_count, to_player = self.board_state[index]
+            mv = Move(1, player, -player, 0, to_count, to_player, 0, index)
+            moves.append(mv)
+
+
+        return moves
+
 
     def progress_turn(self):
         self.active_player = self.ply_count % (self.player_count) + 1

@@ -57,7 +57,8 @@ def main():
     add_command("roll", lambda: cmd_roll(main_board, flags))
     add_command("set", lambda: cmd_set(main_board, flags))
     add_command(["move", "mv"], lambda: cmd_move(main_board, flags))
-    add_command("pass", lambda: cmd_pass(main_board, flags))
+    add_command(["pass", "skip"], lambda: cmd_pass(main_board, flags))
+    add_command(["moves", "mvs"], lambda: cmd_moves(main_board, flags))
 
     print(init_message)
 
