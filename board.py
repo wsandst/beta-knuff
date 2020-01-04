@@ -9,7 +9,7 @@ pieces_per_player = 4
 starting_board_state = [(0,0)]*board_size
 starting_exit_states = [[(0,0), (0,0), (0,0), (0,0)], [(0,0), (0,0), (0,0), (0,0)], [(0,0), (0,0), (0,0), (0,0)], [(0,0), (0,0), (0,0), (0,0)]]
 starting_start_counts = [4]*4
-starting_exit_counts = [4]*0
+starting_exit_counts = [0]*4
 
 #Class for the game board data
 class Board:
@@ -66,8 +66,8 @@ class Board:
                         self.exit_states[mv.to_state_loc-1][mv.to_index] = (1, mv.from_player)
                     else: #Another piece here, add to it
                         self.exit_states[mv.to_state_loc-1] [mv.to_index]= (mv.to_count+1,mv.from_player)
-                else: #Exiting piece
-                    self.exit_states[mv.to_state_loc-1] += 1
+                else: #Exiting piece, increment exit counter
+                    self.exit_counts[mv.from_player-1] += 1
                 if mv.from_count > 1: #Remove moving piece from from pos
                     self.board_state[mv.from_index] = (mv.from_count-1, mv.from_player)
                 else:
@@ -77,7 +77,7 @@ class Board:
             if mv.to_index < 4:
                 self.exit_states[mv.to_state_loc-1][mv.to_index] = (mv.to_count+1,mv.from_player)
             else: #Exiting piece, increment exit counter
-                self.exit_states[mv.to_state_loc-1] += 1
+                self.exit_counts[mv.from_player-1] += 1
             if mv.from_count > 1: #Remove moving piece from from pos
                 self.exit_states[mv.from_state_loc-1][mv.from_index] = (mv.from_count-1, mv.from_player)
             else:
@@ -94,6 +94,8 @@ class Board:
     def generate_moves(self, player = None, roll = None):
         #Generate valid moves for the current active player and roll, returning a List of Move
         
+        exit_square = [40, 10, 20, 30]
+
         if player is None:
             player = self.active_player
         if roll is None:
@@ -106,19 +108,36 @@ class Board:
         for piece in self.board_state:
             if piece[1] == player:
                 to_pos = i + roll
-                if i + roll < 40: #Moving to main state
+                if to_pos >= exit_square[player-1] and i < exit_square[player-1]: #Moving to exit states
+                    to_index = to_pos - exit_square[player-1]
+                    if to_index > 4: #Outside exit states, invalid move
+                        continue
+                    to_count = 0
+                    to_player = 0
+                    if to_index != 4:
+                        to_count, to_player = self.exit_states[player-1][to_index]
+                    mv = Move(piece[0], piece[1], 0, i, to_count, to_player, player, to_index)
+                    moves.append(mv)
+                else: #Moving to main state
+                    to_pos = (i + roll) % 40
                     to_count, to_player = self.board_state[to_pos]
                     mv = Move(piece[0], piece[1], 0, i, to_count, to_player, 0, to_pos)
                     moves.append(mv)
-                else: #Moving to exit states
-                    to_index = (to_pos - 40) % 4
-                    area = (to_pos - 40) // 4
-                    pass
             i += 1    
 
-
-        for piece in self.exit_states:
-            pass
+        i = 0
+        for piece in self.exit_states[player-1]:
+            if piece[1] == player:
+                to_index = i + roll
+                if to_index > 4: #Outside exit states, invalid move
+                    continue
+                to_count = 0
+                to_player = 0
+                if to_index != 4:
+                    to_count, to_player = self.exit_states[player-1][to_index]
+                mv = Move(piece[0], piece[1], player, i, to_count, to_player, player, to_index)
+                moves.append(mv)
+            i += 1
 
         if self.start_counts[player-1] > 0 and (roll == 1 or roll == 6):
             index = (player- 1) * 10 + self.roll - 1

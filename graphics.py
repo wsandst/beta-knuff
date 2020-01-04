@@ -42,6 +42,8 @@ exit_pos_map = [
     [(29, 11), (26, 11), (23, 11), (20, 11)]
 ]
 
+start_pos_map = [(4, 17), (4, 3), (26, 3), (26,17)]
+
 def set_board_value(board_list, pos, value):
     board_list[pos[1]*board_str_width + pos[0]] = value
 
@@ -76,5 +78,22 @@ def display_board(current_board):
                     set_board_value(board_str, exit_pos_map[j][i], str(piece[1]))
             i += 1
         j += 1
+
+    #Draw starting area
+    player = 0
+    for count in current_board.start_counts:
+        if count > 3: #4
+            x,y = start_pos_map[player]
+            set_board_value(board_str, (x+3,y+2), str(player+1))
+        if count > 2: #3
+            x,y = start_pos_map[player]
+            set_board_value(board_str, (x,y+2), str(player+1))
+        if count > 1: #2
+            x,y = start_pos_map[player]
+            set_board_value(board_str, (x+3,y), str(player+1))
+        if count > 0: #1
+            x,y = start_pos_map[player]
+            set_board_value(board_str, (x,y), str(player+1))
+        player += 1
 
     print("".join(board_str))

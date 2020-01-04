@@ -59,14 +59,18 @@ def main():
     add_command(["move", "mv"], lambda: cmd_move(main_board, flags))
     add_command(["pass", "skip"], lambda: cmd_pass(main_board, flags))
     add_command(["moves", "mvs"], lambda: cmd_moves(main_board, flags))
+    add_command("selfplay", lambda: cmd_selfplay(main_board, flags))
 
     print(init_message)
 
     while True:
         input_list = input("\nBknuff: ").split()
         flags = parse(input_list)
-        command = input_list[0]
-        if command in commands:
-            commands[command]()
+        if len(input_list) > 0:
+            command = input_list[0]
+            if command in commands:
+                commands[command]()
+            else:
+                print("The command was not recognized. Type 'help' for a list of commands")
         else:
             print("The command was not recognized. Type 'help' for a list of commands")
