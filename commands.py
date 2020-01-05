@@ -32,7 +32,9 @@ def cmd_reset(current_board, flags):
     current_board.board_state = copy.deepcopy(board.starting_board_state)
     current_board.exit_states = copy.deepcopy(board.starting_exit_states)
     current_board.start_counts = copy.deepcopy(board.starting_start_counts)
-    current_board.exit_counts = copy.deepcopy(board.starting_exit_counts)
+    current_board.exit_counts = copy.deepcopy(board.starting_exit_counts) 
+    current_board.active_player = 1
+    current_board.ply_count = 1
     current_board.roll_dice()
 
 def cmd_roll(current_board, flags):
@@ -71,7 +73,6 @@ def cmd_move(current_board, flags):
         return
 
     mv = moves[int(flags["default"])-1]
-    current_board.move(mv)
 
     attrs = vars(mv)
     print("Made move:",', '.join("%s: %s" % item for item in attrs.items()))
@@ -138,10 +139,14 @@ def cmd_selfplay(current_board, flags):
     #Plays randomly against itself
     win = False
     winning_player = 0
-    count = 1
+    winning_counts = [0,0,0,0]
+    play_count = 1
+    total_ply = 0
+    max_ply = 0
+    min_ply = 1000
     if "c" in flags:
-        count = int(flags["c"])
-    for c in range(count):
+        play_count = int(flags["c"])
+    for c in range(play_count):
         while win is False:
             moves = current_board.generate_moves()
             if "d" in flags:
@@ -155,8 +160,15 @@ def cmd_selfplay(current_board, flags):
                 input()
 
             if len(moves) > 0:
-                mv = random.choice(moves) #Pick a move
-                current_board.move(mv)
+                if current_board.active_player == 1:
+                    mv = select_move_highiq(current_board, moves)
+                    current_board.move(mv)
+                #else:
+                    #mv = random.choice(moves) #Pick a move
+                    #current_board.move(mv)
+                else:
+                    mv = select_move_take(moves)
+                    current_board.move(mv)
             else:
                 current_board.progress_turn()
             i = 1
@@ -166,10 +178,47 @@ def cmd_selfplay(current_board, flags):
                     winning_player = i
                 i += 1
         
-        print("Player", winning_player, "won!")
+        winning_counts[winning_player-1] += 1
         if "r" in flags:
+            total_ply += current_board.ply_count
+            if max_ply < current_board.ply_count:
+                max_ply = current_board.ply_count
+            if min_ply > current_board.ply_count:
+                min_ply = current_board.ply_count
             cmd_reset(current_board, flags)
             win = False
 
+        if c != 0 and c % 200 == 0:
+            print("Completed", (c / play_count) * 100, "percent of task")
+    i = 1
+    for count in winning_counts:
+        print("Player " + str(i) + ": " + str(count) + " wins")
+        i += 1
+    print("Average ply: {} (total {}, max {}, min {})".format(total_ply / play_count, total_ply, max_ply, min_ply))
+    
+
 def error_message(reason):
     print("Command failure: " + reason + ". Please try again.")
+
+def select_move_take(moves):
+    for mv in moves:
+        if mv.to_player != 0 and mv.to_player != mv.from_player: #Can take a piece, good move!
+            return mv
+    else:
+        return random.choice(moves)
+
+def select_move_highiq(current_board, moves):
+    for mv in moves: #Take if possible
+        if mv.to_player != 0 and mv.to_player != mv.from_player: #Can take a piece, good move!
+            return mv
+    #Keep pieces on main board to x if possible:
+    if current_board.roll == 1 or current_board.roll == 6 and (4 - (current_board.exit_counts[current_board.active_player-1] + current_board.start_counts[current_board.active_player-1])) < 2:
+        for mv in moves:
+            if mv.from_state_loc > 0:
+                return mv
+    
+    #Move in pieces you can
+    for mv in moves:
+        if mv.to_index == 4:
+            return mv
+    return random.choice(moves)

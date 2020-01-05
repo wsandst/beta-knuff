@@ -45,7 +45,7 @@ class Board:
             elif mv.to_player == mv.from_player: #Same player in both squares!
                 self.board_state[mv.to_index] = (mv.to_count+1,mv.from_player)
             else: #Took a piece
-                self.start_counts[mv.to_player-1] += 1 #Increment taken players start area
+                self.start_counts[mv.to_player-1] += mv.to_count #Increment taken players start area
                 self.board_state[mv.to_index] = (1, mv.from_player)
         elif mv.from_state_loc == 0: #Moving on the standard board
             if mv.to_state_loc == 0: #Moving to a square on the standard board
@@ -54,7 +54,7 @@ class Board:
                 elif mv.to_player == mv.from_player: #Same player in both squares!
                     self.board_state[mv.to_index] = (mv.to_count+1,mv.from_player)
                 else: #Took a piece
-                    self.start_counts[mv.to_player-1] += 1 #Increment taken players start area
+                    self.start_counts[mv.to_player-1] += mv.to_count #Increment taken players start area
                     self.board_state[mv.to_index] = (1, mv.from_player)
                 if mv.from_count > 1: #Remove moving piece from from pos
                     self.board_state[mv.from_index] = (mv.from_count-1, mv.from_player)
@@ -82,9 +82,6 @@ class Board:
                 self.exit_states[mv.from_state_loc-1][mv.from_index] = (mv.from_count-1, mv.from_player)
             else:
                 self.exit_states[mv.from_state_loc-1][mv.from_index] = (0,0)
-                
-            
-
 
         self.progress_turn()
 
@@ -111,6 +108,7 @@ class Board:
                 if to_pos >= exit_square[player-1] and i < exit_square[player-1]: #Moving to exit states
                     to_index = to_pos - exit_square[player-1]
                     if to_index > 4: #Outside exit states, invalid move
+                        i += 1
                         continue
                     to_count = 0
                     to_player = 0
@@ -130,6 +128,7 @@ class Board:
             if piece[1] == player:
                 to_index = i + roll
                 if to_index > 4: #Outside exit states, invalid move
+                    i += 1
                     continue
                 to_count = 0
                 to_player = 0
@@ -182,3 +181,17 @@ class Board:
                 if piece != (0,0):
                     print(i + ": " + str(piece[0]))
                 i += 1
+
+    def total_piece_count(self): #For debugging purposes
+        for player in [1,2,3,4]:
+            player_count = 0
+            for piece in self.board_state:
+                if piece[1] == player:
+                    player_count += piece[0]
+            for piece in self.exit_states[player-1]:
+                if piece[1] == player:
+                    player_count += piece[0]
+            player_count += self.exit_counts[player-1]
+            player_count += self.start_counts[player-1]
+            if player_count != 4: #Bad bad bad
+                print("Houston, we've got a problem")
