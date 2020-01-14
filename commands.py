@@ -15,6 +15,8 @@ set <pos> <player> [count]          Add a piece on the board, with no regards to
 play <player1/2/3/4> [player2/3/4] [player3/4] [player4] [-m] [-d] [-c count] [-o]
 play: Plays the game with the selected players. -m for manual input between turns, -d to display board every turn, -r to reset the board between games, 
 -c to repeat game count times. -o removes all extra checks, will break other flags. Players available: random, randomtake, human, rulebased
+performance <depth>
+perft <depth>
 """
 
 #This module adds commands for the command parser in main
@@ -307,6 +309,36 @@ def cmd_performance_test(board, flags):
             board.progress_turn()
             numMoves += testPerf(board, depth - 1)
             board.unprogress_turn()
+        return numMoves
+
+
+    start = time.perf_counter()
+
+    nodes = testPerf(workBoard, depth_in)
+    end = time.perf_counter()
+    print("Searched: ", nodes, " leaf nodes")
+    print("In: ", round(end - start, 2), " seconds")
+    print("Performed ", round(nodes/(end - start)), " leaf nodes per second")
+
+def cmd_perft(board, flags):
+    depth_in = int(flags["default"])
+    random.seed(1)
+    workBoard = copy.deepcopy(board)
+    def testPerf(board, depth):
+        if depth <= 0:
+            return 1
+        numMoves = 0
+        for r in range(6):
+            board.roll = r
+            moves = board.generate_moves()
+            for move in moves:
+                board.move(move)
+                numMoves += testPerf(board, depth - 1)
+                board.unmove(move)
+            if len(moves) == 0:
+                board.progress_turn()
+                numMoves += testPerf(board, depth - 1)
+                board.unprogress_turn()
         return numMoves
 
 
