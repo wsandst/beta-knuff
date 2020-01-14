@@ -1,5 +1,5 @@
 import board, graphics, move, player
-import copy, random
+import copy, random, time
 
 #List of commands
 command_list = """List of commands for BetaKnuff Development Build:
@@ -232,6 +232,32 @@ def cmd_play(current_board, flags):
         print("Player {}: {} wins".format(i, count))
         i += 1
     print("Average ply: {} (total {}, max {}, min {})".format(total_ply / play_count, total_ply, max_ply, min_ply))
+
+def cmd_performance_test(board, depth_in  = 24):
+    oldBoard = copy.deepcopy(board)
+    def testPerf(board, depth):
+        if depth <= 0:
+            return 1
+        numMoves = 0
+        moves = board.generate_moves()
+        for move in moves:
+            oldBoard = copy.deepcopy(board)
+            board.move(move)
+            numMoves += testPerf(board, depth - 1)
+            board = oldBoard
+        if len(moves) == 0:
+            board.progress_turn()
+            numMoves += testPerf(board, depth - 1)
+        return numMoves
+
+
+    start = time.perf_counter()
+
+    nodes = testPerf(board, depth_in)
+    end = time.perf_counter()
+    board = oldBoard
+    print("Performed ", nodes/(end - start), " leaf nodes per second")
+
 
 
 def error_message(reason):
