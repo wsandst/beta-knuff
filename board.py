@@ -35,6 +35,7 @@ class Board:
         self.roll_dice()
         self.active_player = 1
         self.ply_count = 1
+        self.roll_list = [self.roll]
 
     def move(self, mv):
         #Retrieve move attributes for readability. Is a class such a bad idea? At least for readability, could do performance test
@@ -85,8 +86,34 @@ class Board:
 
         self.progress_turn()
 
-    def unmove(self, move):
-        pass
+    def unmove(self, mv):
+        if mv.from_state_loc < 0:
+            self.board_state[mv.to_index] = (mv.to_count, mv.to_player)
+            self.start_counts[mv.from_player-1] += 1
+        
+        elif mv.from_state_loc == 0:
+            if mv.to_state_loc == 0:
+                self.board_state[mv.to_index] = (mv.to_count, mv.to_player)
+                self.board_state[mv.from_index] = (mv.from_count, mv.from_player)
+            else:
+                if mv.to_index < 4:
+                    self.exit_states[mv.from_player-1][mv.to_index] = (mv.to_count, mv.to_player)
+                else: #Piece has exited
+                    self.exit_counts[mv.from_player-1] -= 1
+                self.board_state[mv.from_index] = (mv.from_count, mv.from_player)
+
+        elif mv.from_state_loc > 0:
+            if mv.to_index == 4: #Piece has exited
+                self.exit_states[mv.from_player-1][mv.from_index] = (mv.from_count, mv.from_player)
+                self.exit_counts[mv.from_player-1] -= 1
+            else: #Inside the exit state
+                self.exit_states[mv.from_player-1][mv.from_index] = (mv.from_count, mv.from_player)
+                self.exit_states[mv.from_player-1][mv.to_index] = (mv.to_count, mv.to_player)
+
+        self.unprogress_turn()
+
+
+
 
     def generate_moves(self, player = None, roll = None):
         #Generate valid moves for the current active player and roll, returning a List of Move
@@ -152,6 +179,13 @@ class Board:
         self.active_player = self.ply_count % (self.player_count) + 1
         self.ply_count += 1
         self.roll_dice()
+        self.roll_list.append(self.roll)
+
+    def unprogress_turn(self):
+        self.ply_count -= 1
+        self.active_player = self.ply_count % (self.player_count) + 1
+        self.roll_list.pop()
+        self.roll = self.roll_list[-1]
  
     def print_data(self):
         print("Board state:")

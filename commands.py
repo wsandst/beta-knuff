@@ -12,7 +12,6 @@ move <movenum>                      Move the move number from cmd moves. pass to
 moves [player] [roll]               Lists valid moves this turn
 pass                                Skips this players turn. Used when no moves are available
 set <pos> <player> [count]          Add a piece on the board, with no regards to the game rules
-selfplay [-m] [-d]                  Active selfplay. -m to add a manual input between every turn. -d to display the board every turn.
 play <player1/2/3/4> [player2/3/4] [player3/4] [player4] [-m] [-d] [-c count] [-o]
 play: Plays the game with the selected players. -m for manual input between turns, -d to display board every turn, -r to reset the board between games, 
 -c to repeat game count times. -o removes all extra checks, will break other flags. Players available: random, randomtake, human, rulebased
@@ -180,6 +179,7 @@ def play_optimized(current_board, flags):
     if "c" in flags:
         play_count = int(flags["c"])
 
+    start = time.time()
     for c in range(play_count):
         while win is False:
             moves = current_board.generate_moves()
@@ -206,11 +206,13 @@ def play_optimized(current_board, flags):
 
         if c != 0 and c % 200 == 0:
             print("Completed {} percent of task".format((c / play_count) * 100))
-    i = 1
-    for count in winning_counts:
-        print("Player {}: {} wins".format(i, count))
-        i += 1
+    end = time.time()
+
+    for player, wins in enumerate(winning_counts):
+        print("Player {}: {} wins".format(player, wins))
+
     print("Average ply: {} (total {}, max {}, min {})".format(total_ply / play_count, total_ply, max_ply, min_ply))
+    print("Time played: {}".format(end - start))
 
 def cmd_play(current_board, flags):
     #cmd play <player1> <player2/3/4> [player3/4] [player4] [-r]
@@ -243,6 +245,7 @@ def cmd_play(current_board, flags):
     if "c" in flags:
         play_count = int(flags["c"])
 
+    start = time.time()
     for c in range(play_count):
         while win is False:
             moves = current_board.generate_moves()
@@ -279,14 +282,17 @@ def cmd_play(current_board, flags):
 
         if c != 0 and c % 200 == 0:
             print("Completed {} percent of task".format(round((c / play_count) * 100)))
-    i = 1
-    for count in winning_counts:
-        print("Player {}: {} wins".format(i, count))
-        i += 1
+    end = time.time()
+
+    for player, wins in enumerate(winning_counts):
+        print("Player {}: {} wins".format(player, wins))
+
     print("Average ply: {} (total {}, max {}, min {})".format(total_ply / play_count, total_ply, max_ply, min_ply))
+    print("Time played: {}".format(end - start))
 
 def cmd_performance_test(board, flags):
     depth_in = int(flags["default"])
+    random.seed(1)
     workBoard = copy.deepcopy(board)
     def testPerf(board, depth):
         if depth <= 0:
@@ -294,13 +300,13 @@ def cmd_performance_test(board, flags):
         numMoves = 0
         moves = board.generate_moves()
         for move in moves:
-            workBoard = copy.deepcopy(board)
-            workBoard.move(move)
-            numMoves += testPerf(workBoard, depth - 1)
+            board.move(move)
+            numMoves += testPerf(board, depth - 1)
+            board.unmove(move)
         if len(moves) == 0:
-            workBoard = copy.deepcopy(board)
-            workBoard.progress_turn()
-            numMoves += testPerf(workBoard, depth - 1)
+            board.progress_turn()
+            numMoves += testPerf(board, depth - 1)
+            board.unprogress_turn()
         return numMoves
 
 
@@ -311,7 +317,6 @@ def cmd_performance_test(board, flags):
     print("Searched: ", nodes, " leaf nodes")
     print("In: ", round(end - start, 2), " seconds")
     print("Performed ", round(nodes/(end - start))//100, " leaf nodes per second")
-
 
 def error_message(reason):
     print("Command failure: {}. Please try again.".format(reason))
