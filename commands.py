@@ -1,4 +1,4 @@
-import board, graphics, move
+import board, graphics, move, player
 import copy, random
 
 #List of commands
@@ -13,6 +13,9 @@ moves [player] [roll]               Lists valid moves this turn
 pass                                Skips this players turn. Used when no moves are available
 set <pos> <player> [count]          Add a piece on the board, with no regards to the game rules
 selfplay [-m] [-d]                  Active selfplay. -m to add a manual input between every turn. -d to display the board every turn.
+play <player1/2/3/4> [player2/3/4] [player3/4] [player4] [-m] [-d] [-c count] [-o]
+play: Plays the game with the selected players. -m for manual input between turns, -d to display board every turn, -r to reset the board between games, 
+-c to repeat game count times. -o removes all extra checks, will break other flags. Players available: random, randomtake, human, rulebased
 """
 
 #This module adds commands for the command parser in main
@@ -134,9 +137,49 @@ def cmd_pass(current_board, flags):
     print("New roll:", current_board.roll)
     print("Active player:", current_board.active_player)
 
-def cmd_selfplay(current_board, flags):
-    #cmd: selfplay
-    #Plays randomly against itself
+def play_optimized(current_board, flags):
+    pass
+
+def cmd_play(current_board, flags):
+    #cmd play <player1> <player2/3/4> [player3/4] [player4] [-r]
+    moves = []
+    player_dict = {"randomtake": lambda: player.RandomTakePlayer(), 
+                    "human": lambda: player.HumanPlayer(), 
+                    "random": lambda: player.RandomPlayer()}
+    if "default" in flags and isinstance(flags["default"], str):
+        flags["default"] = [flags["default"]]
+
+    if "default" not in flags or len(flags["default"]) > 4:
+        error_message("The required arguments are missing or are incorrectly formated")
+        return
+
+    if "o" in flags:
+        play_optimized(current_board, flags)
+
+    arg_count = len(flags["default"]) 
+    players = [0]*4
+    if arg_count == 1:
+        players = (flags["default"]*4).copy()
+    elif arg_count == 2:
+        players[0] = flags["default"][0]
+        players[1:4] = [flags["default"][1] for i in range(3)]
+    elif arg_count == 3:
+        players[0] = flags["default"][0]
+        players[1] = flags["default"][1]
+        players[2:4] = [flags["default"][2] for i in range(2)]
+    elif arg_count == 4:
+        players = flags["default"].copy()
+
+    print(players)
+
+    try:
+        players = [player_dict[i]() for i in players]
+    except:
+        error_message("Invalid players specified")
+        return
+
+    lambda x: player.RandomPlayer()
+
     win = False
     winning_player = 0
     winning_counts = [0,0,0,0]
@@ -144,31 +187,26 @@ def cmd_selfplay(current_board, flags):
     total_ply = 0
     max_ply = 0
     min_ply = 1000
+
     if "c" in flags:
         play_count = int(flags["c"])
+
     for c in range(play_count):
         while win is False:
             moves = current_board.generate_moves()
             if "d" in flags:
                 cmd_display(current_board, flags)
                 print(len(moves), "Legal moves for Player", current_board.active_player, "with Roll", current_board.roll)
-                for mv in moves:
+                for count, mv in enumerate(moves):
                     attrs = vars(mv)
-                    print(', '.join("%s: %s" % item for item in attrs.items()))
+                    print(count+1, ', '.join("%s: %s" % item for item in attrs.items()))
 
             if "m" in flags:
                 input()
 
             if len(moves) > 0:
-                if current_board.active_player == 1:
-                    mv = select_move_highiq(current_board, moves)
-                    current_board.move(mv)
-                #else:
-                    #mv = random.choice(moves) #Pick a move
-                    #current_board.move(mv)
-                else:
-                    mv = select_move_take(moves)
-                    current_board.move(mv)
+                mv = players[current_board.active_player-1].play(current_board, moves)
+                current_board.move(mv)
             else:
                 current_board.progress_turn()
             i = 1
@@ -179,46 +217,22 @@ def cmd_selfplay(current_board, flags):
                 i += 1
         
         winning_counts[winning_player-1] += 1
-        if "r" in flags:
-            total_ply += current_board.ply_count
-            if max_ply < current_board.ply_count:
-                max_ply = current_board.ply_count
-            if min_ply > current_board.ply_count:
-                min_ply = current_board.ply_count
-            cmd_reset(current_board, flags)
-            win = False
+        total_ply += current_board.ply_count
+        if max_ply < current_board.ply_count:
+            max_ply = current_board.ply_count
+        if min_ply > current_board.ply_count:
+            min_ply = current_board.ply_count
+        cmd_reset(current_board, flags)
+        win = False
 
         if c != 0 and c % 200 == 0:
-            print("Completed", (c / play_count) * 100, "percent of task")
+            print("Completed {} percent of task".format((c / play_count) * 100))
     i = 1
     for count in winning_counts:
-        print("Player " + str(i) + ": " + str(count) + " wins")
+        print("Player {}: {} wins".format(i, count))
         i += 1
     print("Average ply: {} (total {}, max {}, min {})".format(total_ply / play_count, total_ply, max_ply, min_ply))
-    
+
 
 def error_message(reason):
-    print("Command failure: " + reason + ". Please try again.")
-
-def select_move_take(moves):
-    for mv in moves:
-        if mv.to_player != 0 and mv.to_player != mv.from_player: #Can take a piece, good move!
-            return mv
-    else:
-        return random.choice(moves)
-
-def select_move_highiq(current_board, moves):
-    for mv in moves: #Take if possible
-        if mv.to_player != 0 and mv.to_player != mv.from_player: #Can take a piece, good move!
-            return mv
-    #Keep pieces on main board to x if possible:
-    if current_board.roll == 1 or current_board.roll == 6 and (4 - (current_board.exit_counts[current_board.active_player-1] + current_board.start_counts[current_board.active_player-1])) < 2:
-        for mv in moves:
-            if mv.from_state_loc > 0:
-                return mv
-    
-    #Move in pieces you can
-    for mv in moves:
-        if mv.to_index == 4:
-            return mv
-    return random.choice(moves)
+    print("Command failure: {}. Please try again.".format(reason))

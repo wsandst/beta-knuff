@@ -59,7 +59,7 @@ def main():
     add_command(["move", "mv"], lambda: cmd_move(main_board, flags))
     add_command(["pass", "skip"], lambda: cmd_pass(main_board, flags))
     add_command(["moves", "mvs"], lambda: cmd_moves(main_board, flags))
-    add_command("selfplay", lambda: cmd_selfplay(main_board, flags))
+    add_command("play", lambda: cmd_play(main_board, flags))
 
     print(init_message)
 
