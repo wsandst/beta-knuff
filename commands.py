@@ -316,7 +316,7 @@ def cmd_performance_test(board, flags):
     end = time.perf_counter()
     print("Searched: ", nodes, " leaf nodes")
     print("In: ", round(end - start, 2), " seconds")
-    print("Performed ", round(nodes/(end - start))//100, " leaf nodes per second")
+    print("Performed ", round(nodes/(end - start)), " leaf nodes per second")
 
 def error_message(reason):
     print("Command failure: {}. Please try again.".format(reason))
