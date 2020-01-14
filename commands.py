@@ -233,30 +233,32 @@ def cmd_play(current_board, flags):
         i += 1
     print("Average ply: {} (total {}, max {}, min {})".format(total_ply / play_count, total_ply, max_ply, min_ply))
 
-def cmd_performance_test(board, depth_in  = 24):
-    oldBoard = copy.deepcopy(board)
+def cmd_performance_test(board, flags):
+    depth_in = int(flags["default"])
+    workBoard = copy.deepcopy(board)
     def testPerf(board, depth):
         if depth <= 0:
             return 1
         numMoves = 0
         moves = board.generate_moves()
         for move in moves:
-            oldBoard = copy.deepcopy(board)
-            board.move(move)
-            numMoves += testPerf(board, depth - 1)
-            board = oldBoard
+            workBoard = copy.deepcopy(board)
+            workBoard.move(move)
+            numMoves += testPerf(workBoard, depth - 1)
         if len(moves) == 0:
-            board.progress_turn()
-            numMoves += testPerf(board, depth - 1)
+            workBoard = copy.deepcopy(board)
+            workBoard.progress_turn()
+            numMoves += testPerf(workBoard, depth - 1)
         return numMoves
 
 
     start = time.perf_counter()
 
-    nodes = testPerf(board, depth_in)
+    nodes = testPerf(workBoard, depth_in)
     end = time.perf_counter()
-    board = oldBoard
-    print("Performed ", nodes/(end - start), " leaf nodes per second")
+    print("Searched: ", nodes, " leaf nodes")
+    print("In: ", round(end - start, 2), " seconds")
+    print("Performed ", round(nodes/(end - start))//100, " leaf nodes per second")
 
 
 
