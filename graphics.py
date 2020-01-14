@@ -1,5 +1,5 @@
-
-from board import Board
+# coding: utf-8
+from board import Board # Why do we import board?
 
 empty_board_str = """            ┌──┬──┬──┐            
             │  │  │  │            

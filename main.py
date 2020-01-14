@@ -60,7 +60,7 @@ def main():
     add_command(["pass", "skip"], lambda: cmd_pass(main_board, flags))
     add_command(["moves", "mvs"], lambda: cmd_moves(main_board, flags))
     add_command("play", lambda: cmd_play(main_board, flags))
-
+    add_command(["performance", "perft"], lambda: cmd_performance_test(main_board, flags))
     print(init_message)
 
     while True:

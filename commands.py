@@ -1,5 +1,5 @@
 import board, graphics, move, player
-import copy, random
+import copy, random, time
 
 #List of commands
 command_list = """List of commands for BetaKnuff Development Build:
@@ -278,12 +278,40 @@ def cmd_play(current_board, flags):
         win = False
 
         if c != 0 and c % 200 == 0:
-            print("Completed {} percent of task".format(round((c / play_count) * 100),3))
+            print("Completed {} percent of task".format(round((c / play_count) * 100)))
     i = 1
     for count in winning_counts:
         print("Player {}: {} wins".format(i, count))
         i += 1
     print("Average ply: {} (total {}, max {}, min {})".format(total_ply / play_count, total_ply, max_ply, min_ply))
+
+def cmd_performance_test(board, flags):
+    depth_in = int(flags["default"])
+    workBoard = copy.deepcopy(board)
+    def testPerf(board, depth):
+        if depth <= 0:
+            return 1
+        numMoves = 0
+        moves = board.generate_moves()
+        for move in moves:
+            workBoard = copy.deepcopy(board)
+            workBoard.move(move)
+            numMoves += testPerf(workBoard, depth - 1)
+        if len(moves) == 0:
+            workBoard = copy.deepcopy(board)
+            workBoard.progress_turn()
+            numMoves += testPerf(workBoard, depth - 1)
+        return numMoves
+
+
+    start = time.perf_counter()
+
+    nodes = testPerf(workBoard, depth_in)
+    end = time.perf_counter()
+    print("Searched: ", nodes, " leaf nodes")
+    print("In: ", round(end - start, 2), " seconds")
+    print("Performed ", round(nodes/(end - start))//100, " leaf nodes per second")
+
 
 def error_message(reason):
     print("Command failure: {}. Please try again.".format(reason))
