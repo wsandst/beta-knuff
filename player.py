@@ -20,23 +20,55 @@ class RandomTakePlayer(Player):
             return random.choice(moves)
 
 class RuleBasedPlayer(Player):
-    #Plays with basic rules, tries to approximate a good human player
-    def play(self, current_board, moves):
-        for mv in moves: #Take if possible
-            if mv.to_player != 0 and mv.to_player != mv.from_player: #Can take a piece, good move!
-                return mv
-        #Keep pieces on main board to x if possible:
-        if current_board.roll == 1 or current_board.roll == 6 and (4 - (current_board.exit_counts[current_board.active_player-1] + current_board.start_counts[current_board.active_player-1])) < 2:
-            for mv in moves:
-                if mv.from_state_loc > 0:
-                    return mv
-        
-        #Move in pieces you can
-        for mv in moves:
-            if mv.to_index == 4:
-                return mv
-        return random.choice(moves)
+    def eval_piece(self, distance):
+        return 10 + distance
 
+    def eval(self, current_board):
+        score = 0
+
+        last_piece_index = 0
+        last_piece_count = 0
+        for index, piece in enumerate(current_board.board_state):
+            player = piece[1]
+            if player != 0:
+                distance_from_exit = current_board.distance_from_exit(player, index)
+                if player == current_board.active_player: #Your own piece
+                    score += self.eval_piece(distance_from_exit)
+                else: #Another player
+                    score -= self.eval_piece(distance_from_exit)
+
+        for player, state in enumerate(current_board.exit_states, 1):
+            for piece in state:
+                if piece[1] != 0:
+                    if player == current_board.active_player:
+                        score += 60
+                    else:
+                        score -= 60
+
+        for player, count in enumerate(current_board.exit_counts, 1):
+            if player == current_board.active_player:
+                score += 70*count
+            else:
+                score -= 70*count
+
+        return score
+
+
+        #Plays with basic rules, tries to approximate a good human player
+    def play(self, current_board, moves):
+        best_index = 0
+        best_score = -1000000
+        for i, mv in enumerate(moves):
+            current_board.move(mv)
+            score = self.eval(current_board)
+            current_board.unmove(mv)
+
+            if score > best_score:
+                best_score = score
+                best_index = i
+
+        return moves[best_index]
+        
 class HumanPlayer(Player):
     #Human player selects a move
     def play(self, current_board, moves):

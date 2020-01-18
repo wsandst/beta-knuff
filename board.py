@@ -10,6 +10,7 @@ starting_board_state = [(0,0)]*board_size
 starting_exit_states = [[(0,0), (0,0), (0,0), (0,0)], [(0,0), (0,0), (0,0), (0,0)], [(0,0), (0,0), (0,0), (0,0)], [(0,0), (0,0), (0,0), (0,0)]]
 starting_start_counts = [4]*4
 starting_exit_counts = [0]*4
+exit_square = [40, 10, 20, 30]
 
 #Class for the game board data
 class Board:
@@ -117,8 +118,6 @@ class Board:
 
     def generate_moves(self, player = None, roll = None):
         #Generate valid moves for the current active player and roll, returning a List of Move
-        
-        exit_square = [40, 10, 20, 30]
 
         if player is None:
             player = self.active_player
@@ -127,15 +126,12 @@ class Board:
 
         moves = []
 
-        i = 0
-
-        for piece in self.board_state:
+        for i, piece in enumerate(self.board_state):
             if piece[1] == player:
                 to_pos = i + roll
                 if to_pos >= exit_square[player-1] and i < exit_square[player-1]: #Moving to exit states
                     to_index = to_pos - exit_square[player-1]
                     if to_index > 4: #Outside exit states, invalid move
-                        i += 1
                         continue
                     to_count = 0
                     to_player = 0
@@ -147,15 +143,12 @@ class Board:
                     to_pos = (i + roll) % 40
                     to_count, to_player = self.board_state[to_pos]
                     mv = Move(piece[0], piece[1], 0, i, to_count, to_player, 0, to_pos)
-                    moves.append(mv)
-            i += 1    
+                    moves.append(mv)  
 
-        i = 0
-        for piece in self.exit_states[player-1]:
+        for i, piece in enumerate(self.exit_states[player-1]):
             if piece[1] == player:
                 to_index = i + roll
                 if to_index > 4: #Outside exit states, invalid move
-                    i += 1
                     continue
                 to_count = 0
                 to_player = 0
@@ -163,7 +156,6 @@ class Board:
                     to_count, to_player = self.exit_states[player-1][to_index]
                 mv = Move(piece[0], piece[1], player, i, to_count, to_player, player, to_index)
                 moves.append(mv)
-            i += 1
 
         if self.start_counts[player-1] > 0 and (roll == 1 or roll == 6):
             index = (player- 1) * 10 + self.roll - 1
@@ -186,35 +178,19 @@ class Board:
         self.active_player = self.ply_count % (self.player_count) + 1
         self.roll_list.pop()
         self.roll = self.roll_list[-1]
- 
-    def print_data(self):
-        print("Board state:")
-        print(self.board_state)
-        print("Exit states:")
-        print(self.exit_states)
-        print("Pieces yet to start:")
-        print(self.start_counts)
-        print("Pieces exited:")
-        print(self.exit_counts)
-        print("Current roll:", self.roll)
-        print("Current turn:", self.active_player, "at ply:", self.ply_count)
+                
 
     def print_active_pieces(self):
-        i = 0
         print("Main board")
-        for piece in self.board_state:
+        for i, piece in enumerate(self.board_state):
             if piece != (0,0):
-                print(i + ": " + str(piece))
-            i += 1
-        j = 1
-        for state in self.exit_states:
+                print("{}: {}".format(i, str(piece)))
+
+        for j, state in enumerate(self.exit_states):
             print("Exit area for player:", j)
-            j += 1
-            i = 0
-            for piece in state:
+            for i, piece in enumerate(state):
                 if piece != (0,0):
-                    print(i + ": " + str(piece[0]))
-                i += 1
+                    print("{}: {}".format(i, str(piece)))
 
     def total_piece_count(self): #For debugging purposes
         for player in [1,2,3,4]:
@@ -229,3 +205,27 @@ class Board:
             player_count += self.start_counts[player-1]
             if player_count != 4: #Bad bad bad
                 print("Houston, we've got a problem")
+
+    def distance_from_exit(self, player, index): #Max 40, min 0
+        exit_value = exit_square[player-1]
+        if index < exit_value:
+	        return exit_value - index - 1
+        elif index >= exit_value: 
+            return 39 - index + exit_value
+
+    def print_data(self):
+        print("Board state:")
+        print(self.board_state)
+        print("Exit states:")
+        print(self.exit_states)
+        print("Pieces yet to start:")
+        print(self.start_counts)
+        print("Pieces exited:")
+
+        print(self.exit_counts)
+        print("Current roll:", self.roll)
+        print("Current turn: {} at ply: {}".format(self.active_player, self.ply_count))
+        for i, piece in enumerate(self.board_state):
+            if piece[0] != 0:
+                d = self.distance_from_exit(piece[1], i)
+                print ("Piece from Player {} at index {} is {} squares from exit".format(piece[1], i, d))

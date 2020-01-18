@@ -1,5 +1,6 @@
 import board, graphics, move, player
 import copy, random, time
+import cProfile
 
 #List of commands
 command_list = """List of commands for BetaKnuff Development Build:
@@ -40,6 +41,7 @@ def cmd_reset(current_board, flags):
     current_board.active_player = 1
     current_board.ply_count = 1
     current_board.roll_dice()
+    current_board.roll_list = [current_board.roll]
 
 def cmd_roll(current_board, flags):
     #cmd: roll [-f roll]
@@ -100,11 +102,9 @@ def cmd_moves(current_board, flags):
         moves = current_board.generate_moves(player, roll)
 
     print("Legal moves for Player", current_board.active_player, "with Roll", current_board.roll)
-    i = 1
-    for mv in moves:
+    for i, mv in enumerate(moves):
         attrs = vars(mv)
         print("Move " + str(i) + ":", ', '.join("%s: %s" % item for item in attrs.items()))
-        i += 1
 
 def cmd_set(current_board, flags):
     #cmd: set <pos> <player> [count]
@@ -139,7 +139,8 @@ def cmd_pass(current_board, flags):
 def get_player_classes(flags):
     player_dict = {"randomtake": lambda: player.RandomTakePlayer(), 
                 "human": lambda: player.HumanPlayer(), 
-                "random": lambda: player.RandomPlayer()}
+                "random": lambda: player.RandomPlayer(),
+                "rulebased": lambda: player.RuleBasedPlayer()}
 
     arg_count = len(flags["default"]) 
     players = [0]*4
@@ -161,6 +162,13 @@ def get_player_classes(flags):
         return []
 
     return players
+
+def cmd_benchmark(current_board, flags):
+    
+    def benchmark():
+        pass
+    
+    cProfile.run("benchmark()")
 
 def play_optimized(current_board, flags):
 
@@ -190,12 +198,11 @@ def play_optimized(current_board, flags):
                 current_board.move(mv)
             else:
                 current_board.progress_turn()
-            i = 1
-            for count in current_board.exit_counts:
+
+            for player, count in enumerate(current_board.exit_counts, 1):
                 if count >= 4:
                     win = True
-                    winning_player = i
-                i += 1
+                    winning_player = player
         
         winning_counts[winning_player-1] += 1
         total_ply += current_board.ply_count
@@ -210,7 +217,7 @@ def play_optimized(current_board, flags):
             print("Completed {} percent of task".format((c / play_count) * 100))
     end = time.time()
 
-    for player, wins in enumerate(winning_counts):
+    for player, wins in enumerate(winning_counts, 1):
         print("Player {}: {} wins".format(player, wins))
 
     print("Average ply: {} (total {}, max {}, min {})".format(total_ply / play_count, total_ply, max_ply, min_ply))
@@ -259,19 +266,19 @@ def cmd_play(current_board, flags):
                     print(count+1, ', '.join("%s: %s" % item for item in attrs.items()))
 
             if "m" in flags:
-                input()
+                if input() == "exit":
+                    return
 
             if len(moves) > 0:
                 mv = players[current_board.active_player-1].play(current_board, moves)
                 current_board.move(mv)
             else:
                 current_board.progress_turn()
-            i = 1
-            for count in current_board.exit_counts:
+
+            for player, count in enumerate(current_board.exit_counts, 1):
                 if count >= 4:
                     win = True
-                    winning_player = i
-                i += 1
+                    winning_player = player
         
         winning_counts[winning_player-1] += 1
         total_ply += current_board.ply_count
@@ -286,7 +293,7 @@ def cmd_play(current_board, flags):
             print("Completed {} percent of task".format(round((c / play_count) * 100)))
     end = time.time()
 
-    for player, wins in enumerate(winning_counts):
+    for player, wins in enumerate(winning_counts, 1):
         print("Player {}: {} wins".format(player, wins))
 
     print("Average ply: {} (total {}, max {}, min {})".format(total_ply / play_count, total_ply, max_ply, min_ply))
