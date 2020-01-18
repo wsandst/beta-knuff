@@ -1,4 +1,5 @@
 from board import Board
+import player
 from commands import *
 
 init_message = """---------------------------
@@ -10,6 +11,7 @@ Type 'help' for a list of commands.
 """
 
 commands = {}
+players = {}
 
 def add_command(triggers, function):
     if isinstance(triggers, str):
@@ -17,6 +19,13 @@ def add_command(triggers, function):
     else:
         for trigger in triggers:
             commands[trigger] = function
+
+def add_player(names, function):
+    if isinstance(names, str):
+        players[names] = function
+    else:
+        for trigger in names:
+            players[trigger] = function
 
 
 def parse(input_list):
@@ -59,9 +68,14 @@ def main():
     add_command(["move", "mv"], lambda: cmd_move(main_board, flags))
     add_command(["pass", "skip"], lambda: cmd_pass(main_board, flags))
     add_command(["moves", "mvs"], lambda: cmd_moves(main_board, flags))
-    add_command("play", lambda: cmd_play(main_board, flags))
+    add_command("play", lambda: cmd_play(main_board, flags, players))
     add_command("performance", lambda: cmd_performance_test(main_board, flags))
     add_command("perft", lambda: cmd_perft(main_board, flags))
+
+    add_player(["random", "rand", "r"], lambda: player.RandomPlayer("Random"))
+    add_player(["randomtake", "randtake", "rt", "rtake"], lambda: player.RandomTakePlayer("RandomTake"))
+    add_player(["rulebased", "rb", "ruleb"], lambda: player.RuleBasedPlayer("RuleBased"))
+    add_player(["human", "h", "manual"], lambda: player.HumanPlayer("Human"))
 
     print(init_message)
 

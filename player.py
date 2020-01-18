@@ -2,6 +2,9 @@ import move, board
 import random
 
 class Player: #Parent class to be inherited
+    def __init__(self, name = "Unspecified"):
+        self.name = name
+
     def play(self, current_board, moves):
         return move.Move()
 
@@ -20,7 +23,7 @@ class RandomTakePlayer(Player):
             return random.choice(moves)
 
 class RuleBasedPlayer(Player):
-    #Rule-based player using a simple eval function. It wants to move pieces forward, move into the exits, keep them out of taking range and take pieces
+    #Rulebased player using a simple eval function. Tries to move pieces forward, take other pieces, enter the exit and keep pieces away from taking distance
     def eval_piece(self, distance, count = 1):
         return (10 + distance) * count
 
@@ -88,3 +91,14 @@ class RuleBasedPlayer(Player):
                 best_index = i
 
         return moves[best_index]
+      
+class HumanPlayer(Player):
+    #Human player selects a move
+    def play(self, current_board, moves):
+        print("Human turn. Select a move from the move list: ")
+        while True:
+            move_count = input()
+            if move_count.isdigit():
+                return moves[int(move_count)-1]
+            else:
+                print("Not a valid move. Try again.")

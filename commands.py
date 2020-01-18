@@ -136,13 +136,7 @@ def cmd_pass(current_board, flags):
     print("New roll:", current_board.roll)
     print("Active player:", current_board.active_player)
 
-def get_player_classes(flags):
-    player_dict = {"randomtake": lambda: player.RandomTakePlayer(), 
-                "human": lambda: player.HumanPlayer(), 
-                "random": lambda: player.RandomPlayer(),
-                "rulebased": lambda: player.RuleBasedPlayer(),
-                "old": lambda: player.OldRuleBasedPlayer()}
-
+def get_player_classes(flags, player_dict):
     arg_count = len(flags["default"]) 
     players = [0]*4
     if arg_count == 1:
@@ -156,24 +150,16 @@ def get_player_classes(flags):
         players[2:4] = [flags["default"][2] for i in range(2)]
     elif arg_count == 4:
         players = flags["default"].copy()
-    
     try:
         players = [player_dict[i]() for i in players]
     except:
-        return []
+        return None
 
     return players
 
-def cmd_benchmark(current_board, flags):
-    
-    def benchmark():
-        pass
-    
-    cProfile.run("benchmark()")
+def play_optimized(current_board, flags, player_dict):
 
-def play_optimized(current_board, flags):
-
-    players = get_player_classes(flags)
+    players = get_player_classes(flags, player_dict)
     if players == None:
         error_message("The specified player types are invalid")
         return
@@ -219,13 +205,13 @@ def play_optimized(current_board, flags):
     end = time.time()
 
     for player, wins in enumerate(winning_counts, 1):
-        print("Player {}: {} wins".format(player, wins))
+        print("Player {}: {} wins ({})".format(player, wins, players[player-1].name))
 
     print("Average ply: {} (total {}, max {}, min {})".format(total_ply / play_count, total_ply, max_ply, min_ply))
     print("Time played: {}".format(end - start))
 
-def cmd_play(current_board, flags):
-    #cmd play <player1> <player2/3/4> [player3/4] [player4] [-r]
+def cmd_play(current_board, flags, player_dict):
+    #cmd play <player1> <player2/3/4> [player3/4] [player4] [-c count] [-o]
 
     if "default" in flags and isinstance(flags["default"], str):
         flags["default"] = [flags["default"]]
@@ -235,10 +221,10 @@ def cmd_play(current_board, flags):
         return
 
     if "o" in flags:
-        play_optimized(current_board, flags)
+        play_optimized(current_board, flags, player_dict)
         return
 
-    players = get_player_classes(flags)
+    players = get_player_classes(flags, player_dict)
     if players == None:
         error_message("The specified player types are invalid")
         return
@@ -295,7 +281,7 @@ def cmd_play(current_board, flags):
     end = time.time()
 
     for player, wins in enumerate(winning_counts, 1):
-        print("Player {}: {} wins".format(player, wins))
+        print("Player {}: {} wins ({})".format(player, wins, players[player-1].name))
 
     print("Average ply: {} (total {}, max {}, min {})".format(total_ply / play_count, total_ply, max_ply, min_ply))
     print("Time played: {}".format(end - start))
