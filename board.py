@@ -143,7 +143,7 @@ class Board:
                     to_pos = (i + roll) % 40
                     to_count, to_player = self.board_state[to_pos]
                     mv = Move(piece[0], piece[1], 0, i, to_count, to_player, 0, to_pos)
-                    moves.append(mv)  
+                    moves.append(mv)
 
         for i, piece in enumerate(self.exit_states[player-1]):
             if piece[1] == player:

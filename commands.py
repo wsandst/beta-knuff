@@ -140,7 +140,8 @@ def get_player_classes(flags):
     player_dict = {"randomtake": lambda: player.RandomTakePlayer(), 
                 "human": lambda: player.HumanPlayer(), 
                 "random": lambda: player.RandomPlayer(),
-                "rulebased": lambda: player.RuleBasedPlayer()}
+                "rulebased": lambda: player.RuleBasedPlayer(),
+                "old": lambda: player.OldRuleBasedPlayer()}
 
     arg_count = len(flags["default"]) 
     players = [0]*4
