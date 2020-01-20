@@ -53,7 +53,6 @@ def parse(input_list):
     return flags
     
 
-
 def main():
     main_board = Board()
 
@@ -71,6 +70,8 @@ def main():
     add_command(["play", "run", "p"], lambda: cmd_play(main_board, flags, players))
     add_command("performance", lambda: cmd_performance_test(main_board, flags))
     add_command("perft", lambda: cmd_perft(main_board, flags))
+    add_command("rules", lambda: cmd_rules(main_board, flags))
+    add_command("eval", lambda: cmd_eval(main_board, flags))
 
     add_player(["random", "rand", "r"], lambda: player.RandomPlayer("Random"))
     add_player(["randomtake", "randtake", "rt", "rtake"], lambda: player.RandomTakePlayer("RandomTake"))

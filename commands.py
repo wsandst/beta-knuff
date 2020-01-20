@@ -6,18 +6,20 @@ import cProfile
 command_list = """List of commands for BetaKnuff Development Build:
 exit                                Exit BetaKnuff
 help                                Lists commands for BetaKnuff
-display [-a]                        Displays the current game board and state. -e prints additional info
+display [-a]                        Displays the current game board and state. -a prints additional info
 reset                               Resets the main board to start
 roll [-f num]                       Display the roll for this turn. -f forces a reroll to specified number
+rules [name] [option]               Prints the current rules. Specify name to set the corresponding rule config to true/false or a number.
 move <movenum>                      Move the move number from cmd moves. pass to skip.
 moves [player] [roll]               Lists valid moves this turn
 pass                                Skips this players turn. Used when no moves are available
 set <pos> <player> [count]          Add a piece on the board, with no regards to the game rules
+performance <depth>                 Generates a tree of valid moves, simulating one roll
+perft <depth>                       Generates a tree of valid moves, simulating all rolls
 play <player1/2/3/4> [player2/3/4] [player3/4] [player4] [-m] [-d] [-c count] [-o] [-p playercount]
 play: Plays the game with the selected players. -m for manual input between turns, -d to display board every turn, -r to reset the board between games, 
--c to repeat game count times. -o removes all extra checks, will break other flags. Players available: random, randomtake, human, rulebased
-performance <depth>
-perft <depth>
+-c to repeat game count times. -o removes all extra checks, will break other flags, -p specifies how many players. 
+Players available: random, randomtake, rulebased, human, empty (no player)
 """
 
 #This module adds commands for the command parser in main
@@ -242,6 +244,7 @@ def cmd_play(current_board, flags, player_dict):
     max_ply = 0
     min_ply = 1000
     moves = []
+    doubleentry = [0,0,0,0]
 
     if "l" in flags and int(flags["l"]) <= 4:
         current_board.player_count = int(flags["l"])
@@ -274,6 +277,8 @@ def cmd_play(current_board, flags, player_dict):
                 if mv == None: #Player decides to skip turn
                     current_board.progress_turn()
                     continue
+                if mv.from_state_loc < 0 and mv.from_count == 2: #Double entry performed
+                    doubleentry[current_board.active_player-1] += 1
                 current_board.move(mv)
             else:
                 current_board.progress_turn()
@@ -303,6 +308,7 @@ def cmd_play(current_board, flags, player_dict):
 
     print("Average ply: {} (total {}, max {}, min {})".format(total_ply / play_count, total_ply, max_ply, min_ply))
     print("Time played: {}".format(end - start))
+    print("Double entry", doubleentry)
 
 def cmd_performance_test(board, flags):
     depth_in = int(flags["default"])
@@ -361,6 +367,34 @@ def cmd_perft(board, flags):
     print("Searched: {} leaf nodes".format(nodes))
     print("Time taken: {} seconds ".format(round(end - start, 2)))
     print("Performed {} leaf nodes per second".format(round(nodes/(end - start))))
+
+def cmd_eval(current_board, flags):
+    test_player = player.RuleBasedPlayer()
+    test_player.exit_squares = [40, 10, 20, 30]
+    print("Score:", test_player.eval(current_board, 1))
+
+def cmd_rules(current_board, flags):
+    rule_option_dict = {"true": True, "on": True, "t": True, "false": False, "off": False, "f": False}
+
+    if "default" in flags:
+        try:
+            name = flags["default"][0]
+            setting = False
+            if flags["default"][1].isdigit():
+                setting = int(flags["default"][1]) 
+            else:
+                setting = rule_option_dict[str.lower(flags["default"][1])]
+            if name == "reroll" or name == "new_roll_on_six" or name == "newroll" or name == "newrollonsix":
+                current_board.rule_new_roll_on_six = setting
+            elif name == "doubleentry" or name == "double_entry_on_six" or name == "doubleentryonsix":
+                current_board.rule_double_entry_on_six = setting
+        except:
+            error_message("Incorrectly formatted arguments")
+            return
+
+    print("Rules:")
+    print("Double entry from start allowed on roll 6:", current_board.rule_double_entry_on_six)
+    print("New roll allowed after roll 6:", current_board.rule_new_roll_on_six)
 
 def error_message(reason):
     print("Command failure: {}. Please try again.".format(reason))

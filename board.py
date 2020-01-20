@@ -35,20 +35,24 @@ class Board:
         self.exit_counts = copy.deepcopy(exit_counts)
         self.roll_dice()
         self.active_player = 1
-        self.ply_count = 1
+        self.ply_count = 0
         self.roll_list = [self.roll]
+        #Standard rules
+        self.rule_double_entry_on_six = False
+        self.rule_new_roll_on_six = False
 
     def move(self, mv):
         #Retrieve move attributes for readability. Is a class such a bad idea? At least for readability, could do performance test
+
         if mv.from_state_loc < 0: #Move out piece from starting area
-            self.start_counts[mv.from_player-1] -= 1
+            self.start_counts[mv.from_player-1] -= mv.from_count
             if mv.to_player == 0: #Empty square
-                self.board_state[mv.to_index] = (1, mv.from_player)
+                self.board_state[mv.to_index] = (mv.from_count, mv.from_player)
             elif mv.to_player == mv.from_player: #Same player in both squares!
-                self.board_state[mv.to_index] = (mv.to_count+1,mv.from_player)
+                self.board_state[mv.to_index] = (mv.to_count+mv.from_count,mv.from_player)
             else: #Took a piece
                 self.start_counts[mv.to_player-1] += mv.to_count #Increment taken players start area
-                self.board_state[mv.to_index] = (1, mv.from_player)
+                self.board_state[mv.to_index] = (mv.from_count, mv.from_player)
         elif mv.from_state_loc == 0: #Moving on the standard board
             if mv.to_state_loc == 0: #Moving to a square on the standard board
                 if mv.to_player == 0: #Empty square
@@ -90,7 +94,7 @@ class Board:
     def unmove(self, mv):
         if mv.from_state_loc < 0:
             self.board_state[mv.to_index] = (mv.to_count, mv.to_player)
-            self.start_counts[mv.from_player-1] += 1
+            self.start_counts[mv.from_player-1] += mv.from_count
         
         elif mv.from_state_loc == 0:
             if mv.to_state_loc == 0:
@@ -160,21 +164,31 @@ class Board:
             mv = Move(1, player, -player, 0, to_count, to_player, 0, index)
             moves.append(mv)
 
+            if (roll == 6) and self.rule_double_entry_on_six and self.start_counts[self.active_player-1] > 1: # Double entry
+                index = (player- 1) * 10
+                to_count, to_player = self.board_state[index]
+                mv = Move(2, player, -player, 0, to_count, to_player, 0, index)
+                moves.append(mv)
+
 
         return moves
 
 
     def progress_turn(self):
-        self.active_player = self.ply_count % (self.player_count) + 1
-        self.ply_count += 1
+        if self.roll != 6 or not self.rule_new_roll_on_six:
+            self.ply_count += 1
+            self.active_player = self.ply_count % (self.player_count) + 1
+    
         self.roll_dice()
         self.roll_list.append(self.roll)
 
     def unprogress_turn(self):
-        self.ply_count -= 1
-        self.active_player = self.ply_count % (self.player_count) + 1
         self.roll_list.pop()
         self.roll = self.roll_list[-1]
+
+        if self.roll != 6 or not self.rule_new_roll_on_six:
+            self.ply_count -= 1
+            self.active_player = self.ply_count % (self.player_count) + 1
                 
 
     def print_active_pieces(self):

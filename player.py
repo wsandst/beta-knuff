@@ -25,12 +25,14 @@ class RandomTakePlayer(Player):
 class RuleBasedPlayer(Player):
     #Rulebased player using a simple eval function. Tries to move pieces forward, take other pieces, enter the exit and keep pieces away from taking distance
     def eval_piece(self, distance, count = 1):
-        return (10 + distance) * count
+        return (10 + 39 - distance) * count
+        #return (10 + distance) * count
+
 
     def eval_threats(self, current_board, index, player):
         #Measures how many pieces are within taking range of this piece, and gives 1/6 of their piece values
         score = 0
-        exit_square = self.exit_squares[current_board.active_player-1]
+        exit_square = self.exit_squares[player-1]
         for i in range(6):
             index2 = (index + i) % 40
             if index2 == exit_square:
@@ -42,32 +44,32 @@ class RuleBasedPlayer(Player):
         return score
 
 
-    def eval(self, current_board):
+    def eval(self, current_board, player_num):
         score = 0
-
+   
         for index, piece in enumerate(current_board.board_state):
             player = piece[1]
             if player != 0:
                 distance_from_exit = current_board.distance_from_exit(player, index)
                 count = piece[0]
-                if player == current_board.active_player: #Your own piece
-                    score += self.eval_piece(distance_from_exit) * count
+                if player == player_num: #Your own piece
+                    score += self.eval_piece(distance_from_exit, count)
                     score += self.eval_threats(current_board, index, player)
                 else: #Another player
-                    score -= self.eval_piece(distance_from_exit) * count
+                    score -= self.eval_piece(distance_from_exit, count)
                     score -= self.eval_threats(current_board, index, player)
 
         for player, state in enumerate(current_board.exit_states, 1):
             for piece in state:
                 if piece[1] != 0:
                     count = piece[0]
-                    if player == current_board.active_player:
+                    if player == player_num:
                         score += 60 * count
                     else:
                         score -= 60 * count
 
         for player, count in enumerate(current_board.exit_counts, 1):
-            if player == current_board.active_player:
+            if player == player_num:
                 score += 70*count
             else:
                 score -= 70*count
@@ -79,11 +81,14 @@ class RuleBasedPlayer(Player):
     def play(self, current_board, moves):
         self.exit_squares = [40, 10, 20, 30]
 
+        self.player = current_board.active_player
+
         best_index = 0
         best_score = -1000000
+
         for i, mv in enumerate(moves):
             current_board.move(mv)
-            score = self.eval(current_board)
+            score = self.eval(current_board, self.player)
             current_board.unmove(mv)
 
             if score > best_score:
