@@ -13,7 +13,7 @@ move <movenum>                      Move the move number from cmd moves. pass to
 moves [player] [roll]               Lists valid moves this turn
 pass                                Skips this players turn. Used when no moves are available
 set <pos> <player> [count]          Add a piece on the board, with no regards to the game rules
-play <player1/2/3/4> [player2/3/4] [player3/4] [player4] [-m] [-d] [-c count] [-o]
+play <player1/2/3/4> [player2/3/4] [player3/4] [player4] [-m] [-d] [-c count] [-o] [-p playercount]
 play: Plays the game with the selected players. -m for manual input between turns, -d to display board every turn, -r to reset the board between games, 
 -c to repeat game count times. -o removes all extra checks, will break other flags. Players available: random, randomtake, human, rulebased
 performance <depth>
@@ -182,6 +182,9 @@ def play_optimized(current_board, flags, player_dict):
             moves = current_board.generate_moves()
             if len(moves) > 0:
                 mv = players[current_board.active_player-1].play(current_board, moves)
+                if mv == None: #Player decides to skip turn
+                    current_board.progress_turn()
+                    continue
                 current_board.move(mv)
             else:
                 current_board.progress_turn()
@@ -205,6 +208,8 @@ def play_optimized(current_board, flags, player_dict):
     end = time.time()
 
     for player, wins in enumerate(winning_counts, 1):
+        if player > current_board.active_player:
+            break
         print("Player {}: {} wins ({})".format(player, wins, players[player-1].name))
 
     print("Average ply: {} (total {}, max {}, min {})".format(total_ply / play_count, total_ply, max_ply, min_ply))
@@ -223,7 +228,7 @@ def cmd_play(current_board, flags, player_dict):
     if "o" in flags:
         play_optimized(current_board, flags, player_dict)
         return
-
+        
     players = get_player_classes(flags, player_dict)
     if players == None:
         error_message("The specified player types are invalid")
@@ -238,6 +243,14 @@ def cmd_play(current_board, flags, player_dict):
     min_ply = 1000
     moves = []
 
+    if "l" in flags and int(flags["l"]) <= 4:
+        current_board.player_count = int(flags["l"])
+    else:
+        current_board.player_count = 4
+
+    if "p" in flags:
+        current_board.player_count = int(flags["p"])
+
     if "c" in flags:
         play_count = int(flags["c"])
 
@@ -247,7 +260,7 @@ def cmd_play(current_board, flags, player_dict):
             moves = current_board.generate_moves()
             if "d" in flags:
                 cmd_display(current_board, flags)
-                print(len(moves), "Legal moves for Player", current_board.active_player, "with Roll", current_board.roll)
+                print("{} Legal moves for Player {} with Roll {}".format(len(moves), current_board.active_player, current_board.roll))
                 for count, mv in enumerate(moves):
                     attrs = vars(mv)
                     print(count+1, ', '.join("%s: %s" % item for item in attrs.items()))
@@ -258,6 +271,9 @@ def cmd_play(current_board, flags, player_dict):
 
             if len(moves) > 0:
                 mv = players[current_board.active_player-1].play(current_board, moves)
+                if mv == None: #Player decides to skip turn
+                    current_board.progress_turn()
+                    continue
                 current_board.move(mv)
             else:
                 current_board.progress_turn()
@@ -281,6 +297,8 @@ def cmd_play(current_board, flags, player_dict):
     end = time.time()
 
     for player, wins in enumerate(winning_counts, 1):
+        if player > current_board.player_count:
+            break
         print("Player {}: {} wins ({})".format(player, wins, players[player-1].name))
 
     print("Average ply: {} (total {}, max {}, min {})".format(total_ply / play_count, total_ply, max_ply, min_ply))
@@ -310,9 +328,9 @@ def cmd_performance_test(board, flags):
 
     nodes = testPerf(workBoard, depth_in)
     end = time.perf_counter()
-    print("Searched: ", nodes, " leaf nodes")
-    print("In: ", round(end - start, 2), " seconds")
-    print("Performed ", round(nodes/(end - start)), " leaf nodes per second")
+    print("Searched: {} leaf nodes".format(nodes))
+    print("Time taken: {} seconds ".format(round(end - start, 2)))
+    print("Performed {} leaf nodes per second".format(round(nodes/(end - start))))
 
 def cmd_perft(board, flags):
     depth_in = int(flags["default"])
@@ -340,9 +358,9 @@ def cmd_perft(board, flags):
 
     nodes = testPerf(workBoard, depth_in)
     end = time.perf_counter()
-    print("Searched: ", nodes, " leaf nodes")
-    print("In: ", round(end - start, 2), " seconds")
-    print("Performed ", round(nodes/(end - start)), " leaf nodes per second")
+    print("Searched: {} leaf nodes".format(nodes))
+    print("Time taken: {} seconds ".format(round(end - start, 2)))
+    print("Performed {} leaf nodes per second".format(round(nodes/(end - start))))
 
 def error_message(reason):
     print("Command failure: {}. Please try again.".format(reason))

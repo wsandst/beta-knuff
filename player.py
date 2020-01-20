@@ -102,3 +102,8 @@ class HumanPlayer(Player):
                 return moves[int(move_count)-1]
             else:
                 print("Not a valid move. Try again.")
+
+class EmptyPlayer(Player): #Empty player, trick to skip a player on the board. Useful to only play 1,3 etc
+    #Human player selects a move
+    def play(self, current_board, moves):
+        return None

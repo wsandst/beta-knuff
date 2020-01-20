@@ -113,9 +113,6 @@ class Board:
 
         self.unprogress_turn()
 
-
-
-
     def generate_moves(self, player = None, roll = None):
         #Generate valid moves for the current active player and roll, returning a List of Move
 
