@@ -58,6 +58,7 @@ class RuleBasedPlayer(Player):
                 else: #Another player
                     score -= self.eval_piece(distance_from_exit, count)
                     score -= self.eval_threats(current_board, index, player)
+        
 
         for player, state in enumerate(current_board.exit_states, 1):
             for piece in state:
@@ -73,6 +74,8 @@ class RuleBasedPlayer(Player):
                 score += 70*count
             else:
                 score -= 70*count
+ 
+        
 
         return score
 
@@ -87,8 +90,10 @@ class RuleBasedPlayer(Player):
         best_score = -1000000
 
         for i, mv in enumerate(moves):
+            if mv.to_player != 0 and mv.to_player != self.player:
+                print("Taking piece!")
             current_board.move(mv)
-            score = self.eval(current_board, self.player)
+            score = -self.eval(current_board, self.player)
             current_board.unmove(mv)
 
             if score > best_score:
@@ -97,6 +102,43 @@ class RuleBasedPlayer(Player):
 
         return moves[best_index]
       
+class TakeEvalPlayer(Player):
+    #Eval player that should perform somewhat identical to RandomTake
+    def eval(self, current_board, player_num):
+        score = 0
+   
+        for piece in current_board.board_state:
+            player = piece[1]
+            if player != 0: #Is not an empty square
+                if player == player_num: #Your own piece
+                    score += 10
+                else: #Another player
+                    score -= 10
+        
+        return score
+
+    def play(self, current_board, moves):
+        self.exit_squares = [40, 10, 20, 30]
+
+        self.player = current_board.active_player
+
+        best_index = 0
+        best_score = -1000000
+
+        for i, mv in enumerate(moves):
+            current_board.move(mv)
+            score = self.eval(current_board, self.player)
+            #This gives the expected result, but why?
+            #score = -self.eval(current_board, self.player)
+            current_board.unmove(mv)
+
+            if score > best_score:
+                best_score = score
+                best_index = i
+
+        return moves[best_index]
+      
+
 class HumanPlayer(Player):
     #Human player selects a move
     def play(self, current_board, moves):

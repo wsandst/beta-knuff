@@ -78,6 +78,7 @@ def main():
     add_player(["rulebased", "rb", "ruleb"], lambda: player.RuleBasedPlayer("RuleBased"))
     add_player(["human", "h", "manual"], lambda: player.HumanPlayer("Human"))
     add_player(["empty", "none", "e", "n"], lambda: player.EmptyPlayer("None"))
+    add_player(["takeeval", "te"], lambda: player.TakeEvalPlayer("TakeEval"))
 
     print(init_message)
 
