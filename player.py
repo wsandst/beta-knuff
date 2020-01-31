@@ -4,6 +4,7 @@ import random
 class Player: #Parent class to be inherited
     def __init__(self, name = "Unspecified"):
         self.name = name
+        self.win_count = 0
 
     def play(self, current_board, moves):
         return move.Move()
@@ -74,9 +75,11 @@ class RuleBasedPlayer(Player):
                 score += 70*count
             else:
                 score -= 70*count
- 
-        
 
+        #piece_count_active = 4 - (current_board.start_counts[player_num-1] + current_board.exit_counts[player_num-1])
+        #piece_count_values = [-100,0,0, -100, -200]
+        #score += piece_count_values[piece_count_active]
+ 
         return score
 
 
@@ -90,13 +93,11 @@ class RuleBasedPlayer(Player):
         best_score = -1000000
 
         for i, mv in enumerate(moves):
-            if mv.to_player != 0 and mv.to_player != self.player:
-                print("Taking piece!")
             current_board.move(mv)
-            score = -self.eval(current_board, self.player)
+            score = self.eval(current_board, self.player)
             current_board.unmove(mv)
 
-            if score > best_score:
+            if score >= best_score:
                 best_score = score
                 best_index = i
 
@@ -107,13 +108,17 @@ class TakeEvalPlayer(Player):
     def eval(self, current_board, player_num):
         score = 0
    
+        i = 0
         for piece in current_board.board_state:
             player = piece[1]
             if player != 0: #Is not an empty square
                 if player == player_num: #Your own piece
                     score += 10
+                    i += 1
                 else: #Another player
                     score -= 10
+            if i == 2:
+                break
         
         return score
 
@@ -132,7 +137,7 @@ class TakeEvalPlayer(Player):
             #score = -self.eval(current_board, self.player)
             current_board.unmove(mv)
 
-            if score > best_score:
+            if score >= best_score:
                 best_score = score
                 best_index = i
 

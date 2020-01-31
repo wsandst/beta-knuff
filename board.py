@@ -95,9 +95,13 @@ class Board:
         if mv.from_state_loc < 0:
             self.board_state[mv.to_index] = (mv.to_count, mv.to_player)
             self.start_counts[mv.from_player-1] += mv.from_count
+            if mv.to_player != 0 and mv.to_player != mv.from_player:
+                    self.start_counts[mv.to_player-1] -= mv.to_count
         
         elif mv.from_state_loc == 0:
             if mv.to_state_loc == 0:
+                if mv.to_player != 0 and mv.to_player != mv.from_player:
+                    self.start_counts[mv.to_player-1] -= mv.to_count
                 self.board_state[mv.to_index] = (mv.to_count, mv.to_player)
                 self.board_state[mv.from_index] = (mv.from_count, mv.from_player)
             else:
@@ -170,6 +174,7 @@ class Board:
                 mv = Move(2, player, -player, 0, to_count, to_player, 0, index)
                 moves.append(mv)
 
+        self.total_piece_count()
 
         return moves
 

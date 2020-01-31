@@ -39,7 +39,7 @@ def parse(input_list):
         flag = ''
         for value in input_list[i:]:
             if value[0] == '-':
-                flag = value[1]
+                flag = value[1:]
                 flags[flag] = []
             else:
                 flags[flag].append(value)
