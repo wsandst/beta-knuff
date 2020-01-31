@@ -20,3 +20,7 @@ class Move:
         self.to_player = to_player
         self.to_state_loc = to_state_loc
         self.to_index = to_index
+
+
+    def __hash__(self):
+        return self.from_count ^ self.from_player ^ self.from_state_loc ^ self.from_index ^ self.to_count ^ self.to_player, self.to_state_loc ^ self.to_index
