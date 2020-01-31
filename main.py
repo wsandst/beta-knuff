@@ -79,6 +79,7 @@ def main():
     add_player(["human", "h", "manual"], lambda: player.HumanPlayer("Human"))
     add_player(["empty", "none", "e", "n"], lambda: player.EmptyPlayer("None"))
     add_player(["takeeval", "te"], lambda: player.TakeEvalPlayer("TakeEval"))
+    add_player(["minmax", "mm"], lambda: player.MinMaxPlayer("MinMax"))
 
     print(init_message)
 

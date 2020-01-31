@@ -133,8 +133,6 @@ class TakeEvalPlayer(Player):
         for i, mv in enumerate(moves):
             current_board.move(mv)
             score = self.eval(current_board, self.player)
-            #This gives the expected result, but why?
-            #score = -self.eval(current_board, self.player)
             current_board.unmove(mv)
 
             if score >= best_score:
@@ -143,6 +141,71 @@ class TakeEvalPlayer(Player):
 
         return moves[best_index]
       
+class MinMaxPlayer(RuleBasedPlayer):
+    def minmax(self, current_board, depth, current_player):
+        if depth == 0:
+            self.nodes += 1
+            return self.eval(current_board, current_player)
+
+        current_player = current_board.active_player
+
+        old_roll = current_board.roll
+        if current_player == self.player: #Maximizing
+            value = -1000000
+
+            for roll in range(6):
+                current_board.roll = roll + 1
+                moves = current_board.generate_moves()
+                if len(moves) == 0:
+                    value = max(0, value)
+                for mv in moves:
+                    current_board.move(mv)
+                    value = max(self.minmax(current_board, depth-1, current_player), value)
+                    current_board.unmove(mv)
+            
+            current_depth_value = self.eval(current_board, current_player)
+            return current_depth_value + value / 6
+            
+        else: #Minimzing
+            value = 1000000
+            current_depth_value = self.eval(current_board, current_player)
+
+            for roll in range(6):
+                current_board.roll = roll + 1
+                moves = current_board.generate_moves()
+                if len(moves) == 0:
+                    value = min(0, value)
+                for mv in moves:
+                    current_board.move(mv)
+                    value = min(self.minmax(current_board, depth-1, current_player), value)
+                    current_board.unmove(mv)
+
+            current_depth_value = self.eval(current_board, current_player)
+            return current_depth_value + value / 6
+
+        current_board.roll = old_roll
+
+
+    def play(self, current_board, moves):
+        self.exit_squares = [40, 10, 20, 30]
+
+        self.player = current_board.active_player
+
+        best_index = 0
+        best_score = -1000000
+        self.nodes = 0
+
+        for i, mv in enumerate(moves):
+            current_board.move(mv)
+            score = self.minmax(current_board, 2, self.player)
+            current_board.unmove(mv)
+
+            if score > best_score:
+                best_score = score
+                best_index = i
+
+        print("Searched node count: ", self.nodes)
+        return moves[best_index]
 
 class HumanPlayer(Player):
     #Human player selects a move
