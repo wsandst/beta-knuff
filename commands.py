@@ -175,9 +175,7 @@ def play_optimized(current_board, flags, player_dict):
     min_ply = 1000
     moves = []
 
-    swap = False
-    if "swap" in flags:
-        swap = True
+    swap = "swap" in flags
 
     if "c" in flags:
         play_count = int(flags["c"])
@@ -249,8 +247,7 @@ def cmd_play(current_board, flags, player_dict):
         error_message("The specified player types are invalid")
         return
 
-    win = False
-    winning_player = 0
+    end = False
 
     play_count = 1
     total_ply = 0
@@ -270,9 +267,9 @@ def cmd_play(current_board, flags, player_dict):
     if "c" in flags:
         play_count = int(flags["c"])
 
-    swap = False
-    if "swap" in flags:
-        swap = True
+    swap = "swap" in flags
+    rankings = "rank" in flags
+    place = 0
 
     start = time.time()
     for c in range(play_count):
@@ -285,7 +282,7 @@ def cmd_play(current_board, flags, player_dict):
             elif play_count == 4:
                 players[0], players[1], players[2], players[3] = players[1], players[2], players[3], players[0]
 
-        while win is False:
+        while end is False:
             moves = current_board.generate_moves()
             if "d" in flags:
                 cmd_display(current_board, flags)
@@ -310,11 +307,17 @@ def cmd_play(current_board, flags, player_dict):
                 current_board.progress_turn()
 
             for player, count in enumerate(current_board.exit_counts, 1):
-                if count >= 4:
-                    win = True
-                    winning_player = player
-        
-        players[winning_player-1].win_count += 1
+                if count >= 4 and not players[player-1].has_won:
+                    players[player-1].has_won = True
+                    players[player-1].win_count[place] += 1
+                    if rankings:
+                        place += 1
+                    else:
+                        end = True
+
+            if rankings:
+                end = players[0].has_won and players[1].has_won and players[2].has_won and players[3].has_won
+
 
         total_ply += current_board.ply_count
         if max_ply < current_board.ply_count:
@@ -322,16 +325,19 @@ def cmd_play(current_board, flags, player_dict):
         if min_ply > current_board.ply_count:
             min_ply = current_board.ply_count
         cmd_reset(current_board, flags)
-        win = False
+        players[0].has_won, players[1].has_won, players[2].has_won, players[3].has_won = False, False, False, False
+        end = False
+        place = 0
 
         if c != 0 and c % 200 == 0:
             print("Completed {} percent of task".format(round((c / play_count) * 100)))
+
     end = time.time()
 
     for player_count, player in enumerate(players, 1):
         if player_count > current_board.player_count:
             break
-        print("Player {}: {} wins ({})".format(player_count, player.win_count, player.name))
+        print("Player {}: {} wins ({})\t{}".format(player_count, player.win_count[0], player.name, player.win_count))
 
     print("Average ply: {} (total {}, max {}, min {})".format(total_ply / play_count, total_ply, max_ply, min_ply))
     print("Time played: {}".format(end - start))

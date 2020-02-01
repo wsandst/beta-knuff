@@ -4,7 +4,8 @@ import random
 class Player: #Parent class to be inherited
     def __init__(self, name = "Unspecified"):
         self.name = name
-        self.win_count = 0
+        self.win_count = [0,0,0,0]
+        self.has_won = False
 
     def play(self, current_board, moves):
         return move.Move()
@@ -204,7 +205,6 @@ class MinMaxPlayer(RuleBasedPlayer):
                 best_score = score
                 best_index = i
 
-        print("Searched node count: ", self.nodes)
         return moves[best_index]
 
 class HumanPlayer(Player):
