@@ -143,48 +143,33 @@ class TakeEvalPlayer(Player):
         return moves[best_index]
       
 class MinMaxPlayer(RuleBasedPlayer):
-    def minmax(self, current_board, depth, current_player):
-        if depth == 0:
-            self.nodes += 1
-            return self.eval(current_board, current_player)
+    def minmax(self, current_board, depth):
+        if depth <= 0:
+            return self.eval(current_board, self.player)
 
-        current_player = current_board.active_player
-
+        sum_score = 0
         old_roll = current_board.roll
-        if current_player == self.player: #Maximizing
-            value = -1000000
-
-            for roll in range(6):
-                current_board.roll = roll + 1
-                moves = current_board.generate_moves()
-                if len(moves) == 0:
-                    value = max(0, value)
-                for mv in moves:
-                    current_board.move(mv)
-                    value = max(self.minmax(current_board, depth-1, current_player), value)
-                    current_board.unmove(mv)
+        if current_board.active_player == self.player:
+            optimizer = max
+            start_val = -1000000
+        else:
+            start_val = 1000000
+            optimizer = min
             
-            current_depth_value = self.eval(current_board, current_player)
-            return current_depth_value + value / 6
-            
-        else: #Minimzing
-            value = 1000000
-            current_depth_value = self.eval(current_board, current_player)
-
-            for roll in range(6):
-                current_board.roll = roll + 1
-                moves = current_board.generate_moves()
-                if len(moves) == 0:
-                    value = min(0, value)
-                for mv in moves:
-                    current_board.move(mv)
-                    value = min(self.minmax(current_board, depth-1, current_player), value)
-                    current_board.unmove(mv)
-
-            current_depth_value = self.eval(current_board, current_player)
-            return current_depth_value + value / 6
+        for roll in range(6):
+            current_board.roll = roll + 1
+            value = start_val
+            moves = current_board.generate_moves()
+            if len(moves) == 0:
+                value = optimizer(0, value)
+            for mv in moves:
+                current_board.move(mv)
+                value = optimizer(self.minmax(current_board, depth-1), value)
+                current_board.unmove(mv)
+            sum_score += value
 
         current_board.roll = old_roll
+        return sum_score
 
 
     def play(self, current_board, moves):
@@ -198,7 +183,7 @@ class MinMaxPlayer(RuleBasedPlayer):
 
         for i, mv in enumerate(moves):
             current_board.move(mv)
-            score = self.minmax(current_board, 2, self.player)
+            score = self.minmax(current_board, 2)
             current_board.unmove(mv)
 
             if score > best_score:
