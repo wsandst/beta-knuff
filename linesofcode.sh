@@ -1,1 +1,0 @@
-git ls-files | grep -P ".*(py)" | xargs wc -l
