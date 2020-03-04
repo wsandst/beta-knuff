@@ -30,7 +30,7 @@ class MontePlayer(Player):
         self._expan_calls = 0
         if len(moves) == 1:
             return moves[0]
-        for i in range(200):
+        for i in range(1000):
             winner = self._expand(currentBoard, self.startNode)
             self.startNode.updateState(winner == currentBoard.active_player)
         best_val = -1

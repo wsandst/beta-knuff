@@ -387,7 +387,7 @@ def play_games(current_board: board.Board, flags : dict, players, play_count: in
         place = 0
         if time.time() - last_update > 1:
             last_update = time.time()
-            print("Completed {} percent of task".format(round((c / play_count) * 100)))
+            print("Completed {} percent of task".format(round(((c + 1) / play_count) * 100)))
 
     end = time.time()
     print("Thread execution finished at time: {}".format(end - start))

@@ -160,7 +160,7 @@ class MinMaxPlayer(RuleBasedPlayer):
 
         for i, mv in enumerate(moves):
             current_board.move(mv)
-            score = self.minmax(current_board, 2)
+            score = self.minmax(current_board, 4)
             current_board.unmove(mv)
 
             if score > best_score:
