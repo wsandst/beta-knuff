@@ -16,7 +16,7 @@ class Node:
 
 class MontePlayer(Player):
     """An AI based on a monte carlo tree search (mcts)"""
-    def __init__(self, name = "unspecified", policy = RandomTakePlayer()):
+    def __init__(self, name = "unspecified", policy = RuleBasedPlayer()):
         """Policy refers to the simulation step of the MCTS"""
         self.name = name
         self.exploration_param = 2**0.5
@@ -30,18 +30,19 @@ class MontePlayer(Player):
         self._expan_calls = 0
         if len(moves) == 1:
             return moves[0]
-        for i in range(1000):
+        for i in range(200):
             winner = self._expand(currentBoard, self.startNode)
             self.startNode.updateState(winner == currentBoard.active_player)
         best_val = -1
         for move, node in self.startNode.rolls[currentBoard.roll - 1].items():
             if not node:
                 continue
-            if node.score/node.visits > best_val:
-                best_val = node.score/node.visits
+            if node.visits > best_val:
+                best_val = node.visits
+                winchance = node.score / node.visits
                 best_move = move
         
-        #print("_expand called:", self._expan_calls, "Score:", int(best_val * 100), "visits:", self.startNode.rolls[currentBoard.roll - 1][best_move].visits)
+        #print("_expand called:", self._expan_calls, "Score:", int(winchance * 100), "visits:", self.startNode.rolls[currentBoard.roll - 1][best_move].visits)
         self.startNode = Node()
         return best_move
 
