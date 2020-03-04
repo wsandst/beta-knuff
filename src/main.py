@@ -1,5 +1,6 @@
 from board import Board
 import player
+import monteCarloAI
 from commands import *
 
 init_message = """---------------------------
@@ -80,6 +81,7 @@ def main():
     add_player(["empty", "none", "e", "n"], lambda: player.EmptyPlayer("None"))
     add_player(["takeeval", "te"], lambda: player.TakeEvalPlayer("TakeEval"))
     add_player(["minmax", "mm"], lambda: player.MinMaxPlayer("MinMax"))
+    add_player(["montecarlo", "mc"], lambda: monteCarloAI.MontePlayer("MonteCarlo"))
 
     print(init_message)
 

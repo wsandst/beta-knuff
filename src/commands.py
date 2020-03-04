@@ -272,8 +272,8 @@ def cmd_play(current_board, flags, player_dict):
     place = 0
 
     start = time.time()
+    last_update = time.time()
     for c in range(play_count):
-
         if swap:
             if play_count == 2:
                 players[0], players[1] = players[1], players[0]
@@ -328,8 +328,8 @@ def cmd_play(current_board, flags, player_dict):
         players[0].has_won, players[1].has_won, players[2].has_won, players[3].has_won = False, False, False, False
         end = False
         place = 0
-
-        if c != 0 and c % 200 == 0:
+        if time.time() - last_update > 1:
+            last_update = time.time()
             print("Completed {} percent of task".format(round((c / play_count) * 100)))
 
     end = time.time()
