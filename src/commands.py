@@ -285,6 +285,8 @@ def cmd_play(current_board: board.Board, flags : dict, player_dict : dict):
     place = 0
 
     start = time.time()
+    last_update = time.time()
+    
     # Loop for every game count
     # Loop, increment turn count, present moves to player classes and allow them to select
     for c in range(play_count):
@@ -343,8 +345,8 @@ def cmd_play(current_board: board.Board, flags : dict, player_dict : dict):
         players[0].has_won, players[1].has_won, players[2].has_won, players[3].has_won = False, False, False, False
         end = False
         place = 0
-
-        if c != 0 and c % 200 == 0:
+        if time.time() - last_update > 1:
+            last_update = time.time()
             print("Completed {} percent of task".format(round((c / play_count) * 100)))
 
     end = time.time()

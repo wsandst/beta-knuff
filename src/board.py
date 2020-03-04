@@ -51,6 +51,10 @@ class Board:
 
     def move(self, mv: Move):
         """ Perform move mv. Move pieces, increment counters etc"""
+        
+        if not mv: #Progress turn for null move and do nothing else
+            self.progress_turn()
+            return
 
         if mv.from_state_loc < 0: #Move out piece from starting area
             self.start_counts[mv.from_player-1] -= mv.from_count
@@ -101,6 +105,11 @@ class Board:
 
     def unmove(self, mv : Move):
         """ Unmove move mv. Does a move, but backwards"""
+
+        if not mv: #Unprogress turn for null move and do nothing else
+            self.unprogress_turn()
+            return
+
         if mv.from_state_loc < 0:
             self.board_state[mv.to_index] = (mv.to_count, mv.to_player)
             self.start_counts[mv.from_player-1] += mv.from_count
@@ -261,3 +270,10 @@ class Board:
             if piece[0] != 0:
                 d = self.distance_from_exit(piece[1], i)
                 print ("Piece from Player {} at index {} is {} squares from exit".format(piece[1], i, d))
+
+    def check_win(self):
+        """Returns player_id if that player has one. 0 otherwise"""
+        for player, count in enumerate(self.exit_counts):
+            if count == 4:
+                return player + 1
+        return 0
