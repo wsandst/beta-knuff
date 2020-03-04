@@ -1,7 +1,7 @@
 """Command functions and helpers"""
 
 import board, graphics, move, player
-import copy, random, time
+import copy, random, time, multiprocessing
 import cProfile
 
 #List of commands
@@ -261,14 +261,30 @@ def cmd_play(current_board: board.Board, flags : dict, player_dict : dict):
     if "c" in flags:
         play_count = int(flags["c"])
 
-    thread_count = 1
+    global result
+    result = [0, 0, 0, 0]
+
+    def report_res(res):
+        global result
+        result = [result[i] + res[i] for i in range(len(res))]
+
+    thread_count = multiprocessing.cpu_count()
     thread_play_count = play_count // thread_count
     board_list = [copy.deepcopy(current_board) for i in range(thread_count)]
-    players_list = [copy.deepcopy(players) for i in range(thread_count)] 
+    players_list = [copy.deepcopy(players) for i in range(thread_count)]
+    tpool = multiprocessing.Pool(processes=thread_count)
     for i in range(thread_count):
         board_list[i].roll_dice()
-        play_games(board_list[i], flags, players_list[i], thread_play_count)
-
+        tpool.apply_async(play_games, args=(board_list[i], flags, players_list[i], thread_play_count), callback=report_res)
+        #play_games(board_list[i], flags, players_list[i], thread_play_count)
+    report_res(play_games(copy.deepcopy(current_board), flags, copy.deepcopy(players), play_count - thread_play_count * thread_count))
+    while sum(result) != play_count:
+        time.sleep(0.5)
+    for player_count, player in enumerate(players, 1):
+        if player_count > current_board.player_count:
+            break
+        print("Player {}: {} wins ({})\t{}".format(player_count, result[player_count - 1], player.name, sum(result)))     
+    """
     # Game simulation finished. Now print various data related to the games
     win_counts = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
     for players in players_list:
@@ -282,7 +298,7 @@ def cmd_play(current_board: board.Board, flags : dict, player_dict : dict):
             break
         print("Player {}: {} wins ({})\t{}".format(player_count, win_counts[player_count-1][0], player.name, win_counts[player_count-1]))
 
-    #print("Average ply: {} (total {}, max {}, min {})".format(total_ply / play_count, total_ply, max_ply, min_ply))
+    #print("Average ply: {} (total {}, max {}, min {})".format(total_ply / play_count, total_ply, max_ply, min_ply))"""
 
 def play_games(current_board: board.Board, flags : dict, players, play_count: int):
     """cmd: play <player1> <player2/3/4> [player3/4] [player4] [-c count] [-o]
@@ -375,6 +391,7 @@ def play_games(current_board: board.Board, flags : dict, players, play_count: in
 
     end = time.time()
     print("Thread execution finished at time: {}".format(end - start))
+    return [players[i].win_count[0] for i in range(4)] 
 
 def cmd_perft(current_board: board.Board, flags : dict):
     """cmd: perft <depth>. Generates a tree of all valid moves with all valid rolls and counts
