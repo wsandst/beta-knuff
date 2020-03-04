@@ -235,17 +235,6 @@ def play_optimized(current_board: board.Board, flags : dict, player_dict : dict)
     print("Time played: {}".format(end - start))
 
 def cmd_play(current_board: board.Board, flags : dict, player_dict : dict):
-    """cmd: play <player1> <player2/3/4> [player3/4] [player4] [-c count] [-o]
-    [-p playercount] [-swap] 
-    
-    Play cmd which simulates a game with the inputted player types. Supports running multiple
-    games in a row with flag -c. Flag -o runs a separate play function optimized but with less
-    functionality. -p allows to specify how many players should play, up to 4. -swap
-    rotates the player starting positions between games to remove starting bias.
-    -rank keeps playing the games after the first player has won to get total rankings.
-    -m waits for manual input between turns.
-    """
-
     if "default" in flags and isinstance(flags["default"], str):
         flags["default"] = [flags["default"]]
 
@@ -262,15 +251,7 @@ def cmd_play(current_board: board.Board, flags : dict, player_dict : dict):
         error_message("The specified player types are invalid")
         return
 
-    end = False
-
     play_count = 1
-    total_ply = 0
-    max_ply = 0
-    min_ply = 1000
-    moves = []
-    doubleentry = [0,0,0,0]
-
     # Set the total player count based on flag -p
     current_board.player_count = 4
     if "p" in flags:
@@ -280,13 +261,56 @@ def cmd_play(current_board: board.Board, flags : dict, player_dict : dict):
     if "c" in flags:
         play_count = int(flags["c"])
 
+    thread_count = 1
+    thread_play_count = play_count // thread_count
+    board_list = [copy.deepcopy(current_board) for i in range(thread_count)]
+    players_list = [copy.deepcopy(players) for i in range(thread_count)] 
+    for i in range(thread_count):
+        board_list[i].roll_dice()
+        play_games(board_list[i], flags, players_list[i], thread_play_count)
+
+    # Game simulation finished. Now print various data related to the games
+    win_counts = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
+    for players in players_list:
+        for player_num, player in enumerate(players):
+            win_counts[player_num][0] += player.win_count[0]
+            win_counts[player_num][1] += player.win_count[1]
+            win_counts[player_num][2] += player.win_count[2]
+            win_counts[player_num][3] += player.win_count[3]
+    for player_count, player in enumerate(players, 1):
+        if player_count > current_board.player_count:
+            break
+        print("Player {}: {} wins ({})\t{}".format(player_count, win_counts[player_count-1][0], player.name, win_counts[player_count-1]))
+
+    #print("Average ply: {} (total {}, max {}, min {})".format(total_ply / play_count, total_ply, max_ply, min_ply))
+
+def play_games(current_board: board.Board, flags : dict, players, play_count: int):
+    """cmd: play <player1> <player2/3/4> [player3/4] [player4] [-c count] [-o]
+    [-p playercount] [-swap] 
+    
+    Play cmd which simulates a game with the inputted player types. Supports running multiple
+    games in a row with flag -c. Flag -o runs a separate play function optimized but with less
+    functionality. -p allows to specify how many players should play, up to 4. -swap
+    rotates the player starting positions between games to remove starting bias.
+    -rank keeps playing the games after the first player has won to get total rankings.
+    -m waits for manual input between turns.
+    """
+
+    end = False
+
+    total_ply = 0
+    max_ply = 0
+    min_ply = 1000
+    moves = []
+    doubleentry = [0,0,0,0]
+
     swap = "swap" in flags
     rankings = "rank" in flags
     place = 0
 
     start = time.time()
     last_update = time.time()
-    
+
     # Loop for every game count
     # Loop, increment turn count, present moves to player classes and allow them to select
     for c in range(play_count):
@@ -350,16 +374,7 @@ def cmd_play(current_board: board.Board, flags : dict, player_dict : dict):
             print("Completed {} percent of task".format(round((c / play_count) * 100)))
 
     end = time.time()
-
-    # Game simulation finished. Now print various data related to the games
-    for player_count, player in enumerate(players, 1):
-        if player_count > current_board.player_count:
-            break
-        print("Player {}: {} wins ({})\t{}".format(player_count, player.win_count[0], player.name, player.win_count))
-
-    print("Average ply: {} (total {}, max {}, min {})".format(total_ply / play_count, total_ply, max_ply, min_ply))
-    print("Time played: {}".format(end - start))
-    print("Double entry", doubleentry)
+    print("Thread execution finished at time: {}".format(end - start))
 
 def cmd_perft(current_board: board.Board, flags : dict):
     """cmd: perft <depth>. Generates a tree of all valid moves with all valid rolls and counts
