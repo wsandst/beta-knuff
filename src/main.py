@@ -1,6 +1,9 @@
+"""Main file with command loop"""
+
 from board import Board
 import player
 from commands import *
+from typing import Union
 
 init_message = """---------------------------
 BetaKnuff Development Build
@@ -10,17 +13,20 @@ Type 'help' for a list of commands.
 
 """
 
+#Dictionaries for mapping commands/playertypes to functions/classes
 commands = {}
 players = {}
 
-def add_command(triggers, function):
+def add_command(triggers : Union[dict, str], function):
+    """Add a command to the global players dictionary"""
     if isinstance(triggers, str):
         commands[triggers] = function
     else:
         for trigger in triggers:
             commands[trigger] = function
 
-def add_player(names, function):
+def add_player(names : Union[dict, str], function):
+    """Add a player type to the global players dictionary"""
     if isinstance(names, str):
         players[names] = function
     else:
@@ -28,7 +34,14 @@ def add_player(names, function):
             players[trigger] = function
 
 
-def parse(input_list):
+def parse(input_list : list) -> dict:
+    """Parse the flags of a written line into dictionary representing the flags
+
+    The outputted dict is in the form of {FLAG:value, ...}, where value is
+    Union[str, int, list]. Note that the preceeding '-' is removed from flag dict key. 
+    The default arguments (with no flag, connecting directly to the command) are stored under
+    the flag 'default'
+    """
     flags = {}
     if len(input_list) > 1:
         i = 1
@@ -54,10 +67,12 @@ def parse(input_list):
     
 
 def main():
+    """Main function containing the command input loop"""
     main_board = Board()
 
     flags = {}
 
+    # Registring the command strings and corresponding function
     add_command(["help", "h"], lambda: cmd_help(flags))
     add_command("exit", lambda: cmd_exit(flags))
     add_command(["display", "disp", "d"], lambda: cmd_display(main_board, flags))
@@ -73,16 +88,17 @@ def main():
     add_command("rules", lambda: cmd_rules(main_board, flags))
     add_command("eval", lambda: cmd_eval(main_board, flags))
 
+    # Registering player types and their corresponding classes
     add_player(["random", "rand", "r"], lambda: player.RandomPlayer("Random"))
     add_player(["randomtake", "randtake", "rt", "rtake"], lambda: player.RandomTakePlayer("RandomTake"))
     add_player(["rulebased", "rb", "ruleb"], lambda: player.RuleBasedPlayer("RuleBased"))
     add_player(["human", "h", "manual"], lambda: player.HumanPlayer("Human"))
     add_player(["empty", "none", "e", "n"], lambda: player.EmptyPlayer("None"))
-    add_player(["takeeval", "te"], lambda: player.TakeEvalPlayer("TakeEval"))
     add_player(["minmax", "mm"], lambda: player.MinMaxPlayer("MinMax"))
 
     print(init_message)
 
+    # Main input loop. Grab input, parse and execute command
     while True:
         input_list = input("\nBknuff: ").split()
         flags = parse(input_list)

@@ -1,6 +1,8 @@
 # coding: utf-8
+""" Functions for drawing simple command-line graphics for Ludo"""
 from board import Board # Why do we import board?
 
+# String for displaying the board
 empty_board_str = """            ┌──┬──┬──┐            
             │  │  │  │            
             ├──┼──┼──┤            
@@ -28,6 +30,7 @@ empty_board_str = """            ┌──┬──┬──┐
 
 board_str_width = 35
 
+# Board indexes mapped to positions on the board string
 piece_pos_map = [
     (14, 21), (14, 19), (14, 17), (14, 15), (14, 13), (11, 13), (8, 13), (5, 13), (2, 13), (2, 11),
     (2, 9), (5, 9), (8, 9), (11, 9), (14, 9), (14, 7), (14, 5), (14, 3), (14, 1), (17, 1),
@@ -44,10 +47,15 @@ exit_pos_map = [
 
 start_pos_map = [(4, 17), (4, 3), (26, 3), (26,17)]
 
-def set_board_value(board_list, pos, value):
+def set_board_value(board_list : list, pos : tuple, value : str):
+    """ Set pos at the board string to string value """
     board_list[pos[1]*board_str_width + pos[0]] = value
 
-def display_board(current_board):
+def display_board(current_board : Board):
+    """ Generate a board string which is visualised with print.
+    
+    Uses the premade empty board string and fills it in with pieces from the Board class
+    """
     board_str = list(empty_board_str)
 
     i = 0

@@ -1,3 +1,5 @@
+"""Command functions and helpers"""
+
 import board, graphics, move, player
 import copy, random, time
 import cProfile
@@ -26,16 +28,16 @@ Players available: random, randomtake, rulebased, human, empty (no player)
 #Flags is a dictionary containing the char flag (ex 'd') and the corresponding arg (None if none)
 #The "standard" arguments, ie the ones at the start without a flag is filed under the flag "-default" 
 
-def cmd_display(current_board, flags):
-    #cmd: display [-a]
+def cmd_display(current_board : board.Board, flags : dict):
+    """cmd: display [-a]. Display the board state. -a for more information"""
     graphics.display_board(current_board)
     if 'a' in flags:
         current_board.print_data()
     if 'p' in flags:
         current_board.print_active_pieces()
 
-def cmd_reset(current_board, flags):
-    #cmd: reset
+def cmd_reset(current_board : board.Board, flags : dict):
+    """cmd: reset. Reset the board state to ready it for a new game"""
     current_board.board_state = copy.deepcopy(board.starting_board_state)
     current_board.exit_states = copy.deepcopy(board.starting_exit_states)
     current_board.start_counts = copy.deepcopy(board.starting_start_counts)
@@ -45,29 +47,29 @@ def cmd_reset(current_board, flags):
     current_board.roll_dice()
     current_board.roll_list = [current_board.roll]
 
-def cmd_roll(current_board, flags):
-    #cmd: roll [-f roll]
+def cmd_roll(current_board : board.Board, flags : dict):
+    """cmd roll [-f roll]. Display the current roll. Force it to a specific roll with -f"""
     if "f" in flags:
         current_board.roll = int(flags["f"])
     print("Roll: {}".format(current_board.roll))
 
-def cmd_turn(current_board, flags):
-    #cmd: turn [-f turn]
+def cmd_turn(current_board : board.Board, flags : dict):
+    """cmd: turn [-f turn]. Display the current turn or force it to a certain turn with -f"""
     if "f" in flags:
         current_board.active_player = int(flags["f"])
     print("Turn: {}".format(current_board.active_player))
 
-def cmd_help(flags):
-    #cmd: help
+def cmd_help(flags : dict):
+    """cmd: help. Print the help string, containing command descriptions"""
     print(command_list)
 
-def cmd_exit(flags):
-    #cmd: exit
+def cmd_exit(flags : dict):
+    """cmd: exit. Exit the program"""
     print("Exiting BetaKnuff...")
     exit()
 
-def cmd_move(current_board, flags):
-    #cmd: move <pos> [-d distance]
+def cmd_move(current_board : board.Board, flags : dict):
+    """cmd: move <movecount>. Perform a move in the generated movelist, using movecount for index"""
     if "default" not in flags or len(flags["default"]) < 1:
         error_message("The required arguments are missing or are incorrectly formated")
         return
@@ -90,8 +92,8 @@ def cmd_move(current_board, flags):
     print("New roll:", current_board.roll)
     print("Active player:", current_board.active_player)
 
-def cmd_moves(current_board, flags):
-    #cmd: moves
+def cmd_moves(current_board : board.Board, flags : dict):
+    """cmd: moves. Prints available moves for the current player"""
     player = None
     roll = None
     if "default" in flags:
@@ -108,37 +110,41 @@ def cmd_moves(current_board, flags):
         attrs = vars(mv)
         print("Move " + str(i) + ":", ', '.join("%s: %s" % item for item in attrs.items()))
 
-def cmd_set(current_board, flags):
-    #cmd: set <pos> <player> [count]
-    #Mandatory flag -default 2
-    if "default" not in flags or len(flags["default"]) < 2:
+def cmd_set(current_board : board.Board, flags : dict):
+    """cmd: set <state> <index> <player> [count]. Set the index in state to player and optional count"""
+    if "default" not in flags or len(flags["default"]) < 3:
         error_message("The required arguments are missing or are incorrectly formated")
-    
-    pos = int(flags["default"][0])
-    player = int(flags["default"][1])
+        return
+
+    state = int(flags["default"][0])
+    pos = int(flags["default"][1])
+    player = int(flags["default"][2])
     count = 1
-    if len(flags["default"]) == 3:
+    
+    if len(flags["default"]) > 3:
         count = int(flags["default"][2])
 
-    if pos < 40 and pos >= 0:
-        current_board.board_state[pos] = (count, player)
-    elif pos >= 40 and pos < 56: #Exit area
-        index = (pos - 40) % 4
-        area = (pos - 40) // 4
-        current_board.exit_states[area][index] = (count, player)
-    elif pos == -1:
+    if state == -1:
         current_board.start_counts[player-1] = count
+    elif state == 0:
+        if pos < 40 and pos >= 0:
+            current_board.board_state[pos] = (count, player)
+    elif state > 0 and pos >= 0 and pos <= 4:
+        current_board.exit_states[state-1][pos] = (count, player)
     else:
-        error_message("The required arguments are missing or are incorrectly formated")
+        error_message("The required arguments are incorrectly formated")
 
-def cmd_pass(current_board, flags):
-    #cmd pass
+def cmd_pass(current_board : board.Board, flags : dict):
+    """cmd: pass. Pass current turn"""
     current_board.progress_turn()
     print("Turn passed.")
     print("New roll:", current_board.roll)
     print("Active player:", current_board.active_player)
 
-def get_player_classes(flags, player_dict):
+def get_player_classes(flags : dict, player_dict : dict):
+    """Helper class for cmd play. Returns the classes representing the players based
+    on the inputted player flags
+    """
     arg_count = len(flags["default"]) 
     players = [0]*4
     if arg_count == 1:
@@ -159,8 +165,8 @@ def get_player_classes(flags, player_dict):
 
     return players
 
-def play_optimized(current_board, flags, player_dict):
-
+def play_optimized(current_board: board.Board, flags : dict, player_dict : dict):
+    """Optimized function for play for play -o. Less functionality but marginally faster"""
     players = get_player_classes(flags, player_dict)
     if players == None:
         error_message("The specified player types are invalid")
@@ -228,8 +234,17 @@ def play_optimized(current_board, flags, player_dict):
     print("Average ply: {} (total {}, max {}, min {})".format(total_ply / play_count, total_ply, max_ply, min_ply))
     print("Time played: {}".format(end - start))
 
-def cmd_play(current_board, flags, player_dict):
-    #cmd play <player1> <player2/3/4> [player3/4] [player4] [-c count] [-o]
+def cmd_play(current_board: board.Board, flags : dict, player_dict : dict):
+    """cmd: play <player1> <player2/3/4> [player3/4] [player4] [-c count] [-o]
+    [-p playercount] [-swap] 
+    
+    Play cmd which simulates a game with the inputted player types. Supports running multiple
+    games in a row with flag -c. Flag -o runs a separate play function optimized but with less
+    functionality. -p allows to specify how many players should play, up to 4. -swap
+    rotates the player starting positions between games to remove starting bias.
+    -rank keeps playing the games after the first player has won to get total rankings.
+    -m waits for manual input between turns.
+    """
 
     if "default" in flags and isinstance(flags["default"], str):
         flags["default"] = [flags["default"]]
@@ -256,14 +271,12 @@ def cmd_play(current_board, flags, player_dict):
     moves = []
     doubleentry = [0,0,0,0]
 
-    if "l" in flags and int(flags["l"]) <= 4:
-        current_board.player_count = int(flags["l"])
-    else:
-        current_board.player_count = 4
-
+    # Set the total player count based on flag -p
+    current_board.player_count = 4
     if "p" in flags:
         current_board.player_count = int(flags["p"])
 
+    # Set game count based on flag -c
     if "c" in flags:
         play_count = int(flags["c"])
 
@@ -272,14 +285,16 @@ def cmd_play(current_board, flags, player_dict):
     place = 0
 
     start = time.time()
+    # Loop for every game count
+    # Loop, increment turn count, present moves to player classes and allow them to select
     for c in range(play_count):
-
         if swap:
-            if play_count == 2:
+            # Rotate the player start positions
+            if current_board.player_count == 2:
                 players[0], players[1] = players[1], players[0]
-            elif play_count == 3:
+            elif current_board.player_count == 3:
                 players[0], players[1], players[2] = players[1], players[2], players[0]
-            elif play_count == 4:
+            elif current_board.player_count == 4:
                 players[0], players[1], players[2], players[3] = players[1], players[2], players[3], players[0]
 
         while end is False:
@@ -334,6 +349,7 @@ def cmd_play(current_board, flags, player_dict):
 
     end = time.time()
 
+    # Game simulation finished. Now print various data related to the games
     for player_count, player in enumerate(players, 1):
         if player_count > current_board.player_count:
             break
@@ -343,35 +359,9 @@ def cmd_play(current_board, flags, player_dict):
     print("Time played: {}".format(end - start))
     print("Double entry", doubleentry)
 
-def cmd_performance_test(board, flags):
-    depth_in = int(flags["default"])
-    random.seed(1)
-    workBoard = copy.deepcopy(board)
-    def testPerf(board, depth):
-        if depth <= 0:
-            return 1
-        numMoves = 0
-        moves = board.generate_moves()
-        for move in moves:
-            board.move(move)
-            numMoves += testPerf(board, depth - 1)
-            board.unmove(move)
-        if len(moves) == 0:
-            board.progress_turn()
-            numMoves += testPerf(board, depth - 1)
-            board.unprogress_turn()
-        return numMoves
-
-
-    start = time.perf_counter()
-
-    nodes = testPerf(workBoard, depth_in)
-    end = time.perf_counter()
-    print("Searched: {} leaf nodes".format(nodes))
-    print("Time taken: {} seconds ".format(round(end - start, 2)))
-    print("Performed {} leaf nodes per second".format(round(nodes/(end - start))))
-
-def cmd_perft(board, flags):
+def cmd_perft(current_board: board.Board, flags : dict):
+    """cmd: perft <depth>. Generates a tree of all valid moves with all valid rolls and counts
+    leaf nodes"""
     depth_in = int(flags["default"])
     random.seed(1)
     workBoard = copy.deepcopy(board)
@@ -401,12 +391,19 @@ def cmd_perft(board, flags):
     print("Time taken: {} seconds ".format(round(end - start, 2)))
     print("Performed {} leaf nodes per second".format(round(nodes/(end - start))))
 
-def cmd_eval(current_board, flags):
+def cmd_eval(current_board: board.Board, flags : dict):
+    """cmd eval: Evaluate the current position with RuleBasedPlayer-evaluation"""
     test_player = player.RuleBasedPlayer()
     test_player.exit_squares = [40, 10, 20, 30]
     print("Score:", test_player.eval(current_board, 1))
 
-def cmd_rules(current_board, flags):
+def cmd_rules(current_board: board.Board, flags : dict):
+    """cmd rules <rule> <state>: change game rule <rule> to <state>
+    
+    Available rules: 
+    New roll on six [reroll] on/off
+    Double entry on first position with roll 6 [doubleentry] on/off
+    """
     rule_option_dict = {"true": True, "on": True, "t": True, "false": False, "off": False, "f": False}
 
     if "default" in flags:
@@ -430,4 +427,5 @@ def cmd_rules(current_board, flags):
     print("New roll allowed after roll 6:", current_board.rule_new_roll_on_six)
 
 def error_message(reason):
+    """Support function for logging error messages related to functions"""
     print("Command failure: {}. Please try again.".format(reason))

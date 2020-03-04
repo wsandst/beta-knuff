@@ -1,8 +1,10 @@
+"""Board class for representing the Ludo board state"""
+
 from random import randrange
 import copy
 from move import *
 
-#Board init variables
+# Board init variables
 board_size = 40
 exit_size = 4
 pieces_per_player = 4
@@ -12,16 +14,22 @@ starting_start_counts = [4]*4
 starting_exit_counts = [0]*4
 exit_square = [40, 10, 20, 30]
 
-#Class for the game board data
+# Class for the game board data
 class Board:
     """
     Class for FiaMedKnuff Board data. The pieces are represented by a tuple (x, y) where the x represents the amount of pieces, and y the player
     Members:
-        board_state [List of [int]]: Represents the 40 squares of the playing board. Starting pos of a player is 10*n, exit pos is 10*n-1
-        exit_states [List of [List of [int]]]: Represents the 4 exit squares for each player.
-        start_counts [List of [int]]: Represents the pieces that have to yet enter the game
-        exit_counts [List of [int]]: Represents the pieces that have exited the game. Not really necessary but makes for easier counting and helps with iffy start counts
-        roll [Int (1:6)]: Represents the current roll for this turn
+        board_state: list of int - Represents the 40 squares of the playing board. Starting pos of a player is 10*n, exit pos is 10*n-1
+        exit_states: list of (list of int) - Represents the 4 exit squares for each player.
+        start_counts: list of int [0:4] - Represents the pieces that have to yet enter the game
+        exit_counts: list of int [0:4] - Represents the pieces that have exited the game. Not really necessary but makes for easier counting and helps with iffy start counts
+        roll : int [1:6] - Represents the current roll for this turn
+        roll_list: list of int - List representing history of rolls, useful for unmove
+        active_player: int - Represents which player has the current turn
+        ply_count: int - Counter for the amount of turns made 
+        RULES
+        rule_double_entry_on_six: bool
+        rule_new_roll_on_six: bool
     """
 
     def roll_dice(self):
@@ -41,8 +49,8 @@ class Board:
         self.rule_double_entry_on_six = False
         self.rule_new_roll_on_six = False
 
-    def move(self, mv):
-        #Retrieve move attributes for readability. Is a class such a bad idea? At least for readability, could do performance test
+    def move(self, mv: Move):
+        """ Perform move mv. Move pieces, increment counters etc"""
 
         if mv.from_state_loc < 0: #Move out piece from starting area
             self.start_counts[mv.from_player-1] -= mv.from_count
@@ -91,7 +99,8 @@ class Board:
 
         self.progress_turn()
 
-    def unmove(self, mv):
+    def unmove(self, mv : Move):
+        """ Unmove move mv. Does a move, but backwards"""
         if mv.from_state_loc < 0:
             self.board_state[mv.to_index] = (mv.to_count, mv.to_player)
             self.start_counts[mv.from_player-1] += mv.from_count
@@ -121,8 +130,8 @@ class Board:
 
         self.unprogress_turn()
 
-    def generate_moves(self, player = None, roll = None):
-        #Generate valid moves for the current active player and roll, returning a List of Move
+    def generate_moves(self, player = None, roll = None) -> list:
+        """ Generate valid moves for the current active player and roll, returning a List of Move """
 
         if player is None:
             player = self.active_player
@@ -180,6 +189,7 @@ class Board:
 
 
     def progress_turn(self):
+        """ Progress turn by incrementing ply counter and switching active player """
         if self.roll != 6 or not self.rule_new_roll_on_six:
             self.ply_count += 1
             self.active_player = self.ply_count % (self.player_count) + 1
@@ -188,6 +198,7 @@ class Board:
         self.roll_list.append(self.roll)
 
     def unprogress_turn(self):
+        """ Unprogress turn by decrementing ply counter and switching active player """
         self.roll_list.pop()
         self.roll = self.roll_list[-1]
 
@@ -195,8 +206,18 @@ class Board:
             self.ply_count -= 1
             self.active_player = self.ply_count % (self.player_count) + 1
                 
+    def distance_from_exit(self, player : int, index : int) -> int: #Max 40, min 0
+        """ Helper function. Returns distance from an index to the players own exit"""
+        exit_value = exit_square[player-1]
+        if index < exit_value:
+	        return exit_value - index - 1
+        elif index >= exit_value: 
+            return 39 - index + exit_value
+
+    # Debugging helper functions below
 
     def print_active_pieces(self):
+        """ Debugging function. Print active pieces """
         print("Main board")
         for i, piece in enumerate(self.board_state):
             if piece != (0,0):
@@ -208,7 +229,8 @@ class Board:
                 if piece != (0,0):
                     print("{}: {}".format(i, str(piece)))
 
-    def total_piece_count(self): #For debugging purposes
+    def total_piece_count(self):
+        """ Debugging function. Check total pieces in play per player are not more than 4"""
         for player in [1,2,3,4]:
             player_count = 0
             for piece in self.board_state:
@@ -220,16 +242,10 @@ class Board:
             player_count += self.exit_counts[player-1]
             player_count += self.start_counts[player-1]
             if player_count != 4: #Bad bad bad
-                print("Houston, we've got a problem")
-
-    def distance_from_exit(self, player, index): #Max 40, min 0
-        exit_value = exit_square[player-1]
-        if index < exit_value:
-	        return exit_value - index - 1
-        elif index >= exit_value: 
-            return 39 - index + exit_value
+                print("Error: Current pieces in play are more than expected")
 
     def print_data(self):
+        """ Debugging function. Print all board states """
         print("Board state:")
         print(self.board_state)
         print("Exit states:")
