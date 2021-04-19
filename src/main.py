@@ -96,7 +96,7 @@ def main():
     add_player(["human", "h", "manual"], lambda: player.HumanPlayer("Human"))
     add_player(["empty", "none", "e", "n"], lambda: player.EmptyPlayer("None"))
     add_player(["minmax", "mm"], lambda: player.MinMaxPlayer("MinMax"))
-    add_player(["montecarlo", "mc"], lambda: monteCarloAI.MontePlayer("MonteCarlo"))
+    add_player(["montecarlo", "mc"], lambda: mct_player.MontePlayer("MonteCarlo"))
 
     print(init_message)
 

@@ -10,7 +10,7 @@ class Node:
 
 
     def updateState(self, results):
-        self.visits += 1
+        self.visits += sum(results)
         self.scores = [
             score + result for score, result in zip(self.scores, results)
         ]
@@ -31,7 +31,7 @@ class MontePlayer(Player):
 
     def eval_piece(self, distance: int, count = 1) -> int:
         """ Return the value of a piece at this square """
-        return (10 + 39 - distance) * count
+        return (40 - distance) * count
         #return (10 + distance) * count
 
 
@@ -56,8 +56,8 @@ class MontePlayer(Player):
             count2, player2 = current_board.board_state[index2] #behind
             if player2 != 0 and player2 != player: #Is opponent piece
                 distance = current_board.distance_from_exit(player2, index2)
-                score -= this_piece_value
-        return score // 6
+                score -= this_piece_value * 2
+        return score // 12
 
 
     def eval(self, board):
@@ -71,18 +71,19 @@ class MontePlayer(Player):
                 count = piece[0]
                 player -= 1
                 scores[player] += self.eval_piece(distance_from_exit, count)
-                scores[player] += self.eval_threats(board, index, player)
+                scores[player] += self.eval_threats(board, index, player + 1)
         
         #Give 60 points for every piece in the exit state
         for player, state in enumerate(board.exit_states, 1):
             for piece in state:
                 if piece[1] != 0:
                     count = piece[0]
-                    scores[player - 1] += 70 * count
+                    scores[player - 1] += 60 * count
 
         # Give 70 points for every piece that has exited
         for player, count in enumerate(board.exit_counts, 1):
-            scores[player - 1] += 90 * count
+            scores[player - 1] += 80 * count
+        return scores
         results = [
             scores[i] - max(
             [score for j, score in enumerate(scores) if j != i]
@@ -96,7 +97,7 @@ class MontePlayer(Player):
         self._expand_calls = 0
         if len(moves) == 1:
             return moves[0]
-        for _i in range(1000):
+        for _i in range(500):
             scores = self._expand(board, self.startNode)
             self.startNode.updateState(scores)
         best_val = -1
@@ -113,44 +114,50 @@ class MontePlayer(Player):
 
 
     def _expand(self, board, node):
+        winner = board.check_win()
+        if winner != 0:
+            scores = [0] * 4
+            scores[winner - 1] = 1
+            return scores
         roll = board.roll
         if node.rolls[roll - 1] == None:
             moves = board.generate_moves()
             if len(moves) == 0:
                 moves = [0]
             node.rolls[roll - 1] = {move : None for move in moves}
-        
-
-            move = self._select(node, roll, board.active_player)
-            
-            board.move(move)
-            scores = self._simulate(board)
-
-            new_node = Node()
-            new_node.updateState(scores)
-            node.rolls[roll - 1][move] = new_node
-
-            board.unmove(move)
-        else:
-            move = self._select(node, roll, board.active_player)
-            if node.rolls[roll - 1][move] == None:
+            player = board.active_player
+            best_scores = [-100000] * 4
+            #scores_sum = [0] * 4
+            for move in moves:
                 board.move(move)
                 scores = self._simulate(board)
-                board.unmove(move)
                 new_node = Node()
                 new_node.updateState(scores)
+                #scores_sum = [s1 + s2 for s1, s2 in zip(scores_sum, scores)]
                 node.rolls[roll - 1][move] = new_node
-            else:
-                board.move(move)
-                scores = self._expand(board, node.rolls[roll - 1][move])
+                if scores[player - 1] > best_scores[player - 1]:
+                    best_scores = scores
                 board.unmove(move)
+            return best_scores
+        else:
+            move = self._select(node, roll, board.active_player)
+            board.move(move)
+            scores = self._expand(board, node.rolls[roll - 1][move])
+            board.unmove(move)
         node.rolls[roll - 1][move].updateState(scores)
         return scores
 
     
     def _simulate(self, board):
+        winner = board.check_win()
+        if winner:
+            scores = [0] * 4
+            scores[winner - 1] = 1
+            return scores
         scores = self.eval(board)
-        scores = [1 / (1 + math.exp(-score / 40)) for score in scores]
+        scores = [math.exp(score / 40) for score in scores]
+        total = sum(scores)
+        scores = [score / total for score in scores]
         return scores
         """
         moves = []
