@@ -1,7 +1,7 @@
 from player import *
 import math
 class Node:
-    """A part of a tree in MCST"""
+    """A part of a tree in MCTS"""
     def __init__(self):
         self.rolls = [None]*6
         self.score = 0
@@ -24,13 +24,14 @@ class MontePlayer(Player):
         self.policy = policy
         self.win_count = [0,0,0,0]
         self.has_won = False
-        self._expan_calls = 0
+        self._expand_calls = 0
+
 
     def play(self, currentBoard, moves):
-        self._expan_calls = 0
+        self._expand_calls = 0
         if len(moves) == 1:
             return moves[0]
-        for i in range(1000):
+        for i in range(10):
             winner = self._expand(currentBoard, self.startNode)
             self.startNode.updateState(winner == currentBoard.active_player)
         best_val = -1
@@ -42,12 +43,13 @@ class MontePlayer(Player):
                 winchance = node.score / node.visits
                 best_move = move
         
-        #print("_expand called:", self._expan_calls, "Score:", int(winchance * 100), "visits:", self.startNode.rolls[currentBoard.roll - 1][best_move].visits)
+        #print("_expand called:", self._expand_calls, "Score:", int(winchance * 100), "visits:", self.startNode.rolls[currentBoard.roll - 1][best_move].visits)
         self.startNode = Node()
         return best_move
 
+
     def _expand(self, board, node):
-        self._expan_calls += 1
+        self._expand_calls += 1
         winner = 0
         roll = board.roll
         active_player = board.active_player
@@ -100,6 +102,7 @@ class MontePlayer(Player):
             else:
                 board.unprogress_turn()
         return winner
+
 
     def _select(self, node, roll):
         score_start = self.exploration_param * math.sqrt(math.log(max(node.visits, 1)))

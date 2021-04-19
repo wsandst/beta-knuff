@@ -93,6 +93,7 @@ def main():
     add_player(["random", "rand", "r"], lambda: player.RandomPlayer("Random"))
     add_player(["randomtake", "randtake", "rt", "rtake"], lambda: player.RandomTakePlayer("RandomTake"))
     add_player(["rulebased", "rb", "ruleb"], lambda: player.RuleBasedPlayer("RuleBased"))
+    add_player(["rulebased2", "rb2", "ruleb2"], lambda : player.RuleBasedPlayer2("RuleBased2"))
     add_player(["human", "h", "manual"], lambda: player.HumanPlayer("Human"))
     add_player(["empty", "none", "e", "n"], lambda: player.EmptyPlayer("None"))
     add_player(["minmax", "mm"], lambda: player.MinMaxPlayer("MinMax"))

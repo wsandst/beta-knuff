@@ -104,7 +104,7 @@ class Board:
         self.progress_turn()
 
     def unmove(self, mv : Move):
-        """ Unmove move mv. Does a move, but backwards"""
+        """Unmove move mv. Does a move, but backwards"""
 
         if not mv: #Unprogress turn for null move and do nothing else
             self.unprogress_turn()
@@ -192,7 +192,7 @@ class Board:
                 mv = Move(2, player, -player, 0, to_count, to_player, 0, index)
                 moves.append(mv)
 
-        self.total_piece_count()
+        #self.total_piece_count()
 
         return moves
 
