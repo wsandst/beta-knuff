@@ -1,8 +1,11 @@
 """Main file with command loop"""
 
+import config
 from board import Board
 import player
 import mct_player
+if config.ENABLE_ML_PLAYER:
+    import ml_player
 from commands import *
 from typing import Union
 
@@ -96,7 +99,10 @@ def main():
     add_player(["human", "h", "manual"], lambda: player.HumanPlayer("Human"))
     add_player(["empty", "none", "e", "n"], lambda: player.EmptyPlayer("None"))
     add_player(["minmax", "mm"], lambda: player.MinMaxPlayer("MinMax"))
-    add_player(["montecarlo", "mc"], lambda: monteCarloAI.MontePlayer("MonteCarlo"))
+    add_player(["montecarlo", "mc"], lambda: mct_player.MontePlayer("MonteCarlo"))
+    if config.ENABLE_ML_PLAYER:
+        add_player(["genmachinelearning", "gml", "gendata"], lambda: ml_player.GenerateDataPlayer("GenerateDataPlayer"))
+        add_player(["machinelearning", "ml", "nn"], lambda: ml_player.MLPlayer("MachineLearning"))
 
     print(init_message)
 

@@ -277,3 +277,21 @@ class Board:
             if count == 4:
                 return player + 1
         return 0
+
+    def generate_compact_repr(self):
+        """ Generates a compact floating point representation of the board 
+            Used for neural networks """
+        output = [0.0] * (40)*2+4+4+1
+        output[0] = (self.active_player - 1) / 3
+        output[1] = self.start_counts[0] / 4
+        output[2] = self.start_counts[1] / 4
+        output[3] = self.start_counts[2] / 4
+        output[4] = self.start_counts[3] / 4
+        output[5] = self.exit_counts[0] / 4
+        output[6] = self.exit_counts[1] / 4
+        output[7] = self.exit_counts[2] / 4
+        output[8] = self.exit_counts[3] / 4
+        for i, (count, player) in enumerate(self.board_state):
+            output[i*2+9+0] = player / 4
+            output[i*2+9+1] = count / 4
+        return output

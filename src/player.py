@@ -16,7 +16,8 @@ class Player:
 class RandomPlayer(Player):
     """ Randomly selects a move """
     def play(self, current_board, moves):
-        return random.choice(moves)
+        return moves[0]
+        #return random.choice(moves)
     
 class RandomTakePlayer(Player):
     """ Plays randomly except for when it can take a piece, which it then does """
@@ -35,7 +36,7 @@ class RuleBasedPlayer(Player):
     """
     def eval_piece(self, distance: int, count = 1) -> int:
         """ Return the value of a piece at this square """
-        return (10 + 39 - distance) * count
+        return (39 - distance) * count
         #return (10 + distance) * count
 
 
@@ -78,16 +79,16 @@ class RuleBasedPlayer(Player):
                 if piece[1] != 0:
                     count = piece[0]
                     if player == player_num:
-                        score += 60 * count
+                        score += 50 * count
                     else:
-                        score -= 60 * count
+                        score -= 50 * count
 
         # Give 70 points for every piece that has exited
         for player, count in enumerate(current_board.exit_counts, 1):
             if player == player_num:
-                score += 70*count
+                score += 60*count
             else:
-                score -= 70*count
+                score -= 60*count
 
         # Adjust how many pieces are optimal on the board concurrently
         #piece_count_active = 4 - (current_board.start_counts[player_num-1] + current_board.exit_counts[player_num-1])
