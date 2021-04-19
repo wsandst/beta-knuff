@@ -214,8 +214,8 @@ def cmd_play(current_board: board.Board, flags : dict, player_dict : dict):
 
         thread_count = multiprocessing.cpu_count()
         thread_play_count = play_count // thread_count
-        board_list = [copy.deepcopy(current_board) for i in range(thread_count)]
         players_list = [copy.deepcopy(players) for i in range(thread_count)]
+        board_list = [copy.deepcopy(current_board) for i in range(thread_count)]
         tpool = multiprocessing.Pool(processes=thread_count)
         for i in range(thread_count):
             board_list[i].roll_dice()
@@ -254,6 +254,7 @@ def play_games(current_board: board.Board, flags : dict, players, play_count: in
     start = time.time()
     last_update = time.time()
 
+    original_players = players.copy()
     # Loop for every game count
     # Loop, increment turn count, present moves to player classes and allow them to select
     for c in range(play_count):
@@ -312,13 +313,13 @@ def play_games(current_board: board.Board, flags : dict, players, play_count: in
         players[0].has_won, players[1].has_won, players[2].has_won, players[3].has_won = False, False, False, False
         end = False
         place = 0
-        if time.time() - last_update > 1:
+        if time.time() - last_update > 5:
             last_update = time.time()
-            print("Completed {} percent of task".format(round(((c + 1) / play_count) * 100)))
+            print("Completed {} percent of task (thread {})".format(round(((c + 1) / play_count) * 100), thread_num))
 
     end = time.time()
     print("Thread {} execution finished after time: {} s".format(thread_num, round(end - start, 4)))
-    return [players[i].win_count[0] for i in range(4)] 
+    return [original_players[i].win_count[0] for i in range(4)] 
 
 def cmd_perft(current_board: board.Board, flags : dict):
     """cmd: perft <depth>. Generates a tree of all valid moves with all valid rolls and counts
