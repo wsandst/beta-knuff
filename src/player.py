@@ -31,7 +31,7 @@ class RuleBasedPlayer(Player):
     """Rulebased player using a simple eval function. 
     
     Tries to move pieces forward, take other pieces, enter the exit and 
-    keep pieces away from taking distance
+    keep pieces away from capturing distance
     """
     def eval_piece(self, distance: int, count = 1) -> int:
         """ Return the value of a piece at this square """
@@ -258,7 +258,7 @@ class MinMaxPlayer(RuleBasedPlayer):
 
         for i, mv in enumerate(moves):
             current_board.move(mv)
-            score = self.minmax(current_board, 4)
+            score = self.minmax(current_board, 3)
             current_board.unmove(mv)
 
             if score > best_score:
