@@ -1,5 +1,6 @@
 from player import *
 import math
+
 class Node:
     """A part of a tree in MCTS"""
     def __init__(self):

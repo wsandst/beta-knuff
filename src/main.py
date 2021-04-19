@@ -2,7 +2,7 @@
 
 from board import Board
 import player
-import monteCarloAI
+import mct_player
 from commands import *
 from typing import Union
 
@@ -11,7 +11,6 @@ BetaKnuff Development Build
 ---------------------------
 
 Type 'help' for a list of commands.
-
 """
 
 #Dictionaries for mapping commands/playertypes to functions/classes
@@ -75,7 +74,7 @@ def main():
 
     # Registring the command strings and corresponding function
     add_command(["help", "h"], lambda: cmd_help(flags))
-    add_command("exit", lambda: cmd_exit(flags))
+    add_command(["exit", "quit", "q"], lambda: cmd_exit(flags))
     add_command(["display", "disp", "d"], lambda: cmd_display(main_board, flags))
     add_command("reset", lambda: cmd_reset(main_board, flags))
     add_command("roll", lambda: cmd_roll(main_board, flags))
@@ -103,7 +102,7 @@ def main():
 
     # Main input loop. Grab input, parse and execute command
     while True:
-        input_list = input("\nBknuff: ").split()
+        input_list = input("\nbknuff: ").split()
         flags = parse(input_list)
         if len(input_list) > 0:
             command = input_list[0]
