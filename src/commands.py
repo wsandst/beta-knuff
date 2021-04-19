@@ -255,6 +255,9 @@ def play_games(current_board: board.Board, flags : dict, players, play_count: in
     last_update = time.time()
 
     original_players = players.copy()
+    last_update = -1
+    update_index = 2
+    next_update_num = (update_index * play_count) // 10
     # Loop for every game count
     # Loop, increment turn count, present moves to player classes and allow them to select
     for c in range(play_count):
@@ -313,9 +316,11 @@ def play_games(current_board: board.Board, flags : dict, players, play_count: in
         players[0].has_won, players[1].has_won, players[2].has_won, players[3].has_won = False, False, False, False
         end = False
         place = 0
-        if time.time() - last_update > 5:
-            last_update = time.time()
-            print("Completed {} percent of task (thread {})".format(round(((c + 1) / play_count) * 100), thread_num))
+        if c == next_update_num:
+            #last_update = time.time()
+            print(f"Completed {10 * update_index} percent of task (thread {thread_num})")
+            update_index += 2
+            next_update_num = (update_index * play_count) // 10
 
     end = time.time()
     print("Thread {} execution finished after time: {} s".format(thread_num, round(end - start, 4)))
