@@ -326,7 +326,7 @@ def cmd_perft(current_board: board.Board, flags : dict):
     leaf nodes"""
     depth_in = int(flags["default"])
     random.seed(1)
-    workBoard = copy.deepcopy(board)
+    work_board = copy.deepcopy(board)
     def testPerf(board, depth):
         if depth <= 0:
             return 1
@@ -347,7 +347,7 @@ def cmd_perft(current_board: board.Board, flags : dict):
 
     start = time.perf_counter()
 
-    nodes = testPerf(workBoard, depth_in)
+    nodes = testPerf(work_board, depth_in)
     end = time.perf_counter()
     print("Searched: {} leaf nodes".format(nodes))
     print("Time taken: {} seconds ".format(round(end - start, 2)))
