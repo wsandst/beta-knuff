@@ -2,7 +2,7 @@
 
 from board import Board
 import player
-import montecarlo_player
+import mct_player
 from commands import *
 from typing import Union
 
