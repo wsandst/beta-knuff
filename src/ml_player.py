@@ -1,9 +1,18 @@
 import ml_model
 from player import *
 import math
+import numpy as np
 
 
 class GenerateDataPlayer(Player):
+    def __init__(self, name = "Unspecified"):
+        self.name = name
+        self.win_count = [0,0,0,0]
+        self.has_won = False
+        self.recorded_inputs = []
+        self.recorded_outputs = []
+
+
     def eval_piece(self, distance: int, count = 1) -> int:
         """ Return the value of a piece at this square """
         return (39 - distance) * count
@@ -87,7 +96,16 @@ class GenerateDataPlayer(Player):
                 best_score = score
                 best_index = i
 
+        self.recorded_inputs.append(current_board.generate_compact_repr())
+        self.recorded_outputs.append([best_score])
+
         return moves[best_index]
+
+    def save_data_to_file(self, filename):
+        np_inputs = np.array(self.recorded_inputs, dtype=np.float32)
+        np_outputs = np.array(self.recorded_outputs, dtype=np.float32)
+        np.savetxt(filename+"_inputs.txt", np_inputs)
+        np.savetxt(filename+"_outputs.txt", np_outputs)
 
 class MLPlayer(Player):
     """Player which uses a neural network evaluation function """

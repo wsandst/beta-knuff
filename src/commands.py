@@ -3,6 +3,8 @@
 import board, graphics, move, player
 import copy, random, time, multiprocessing
 import cProfile
+import config
+
 
 #List of commands
 command_list = """List of commands for BetaKnuff Development Build:
@@ -392,6 +394,29 @@ def cmd_rules(current_board: board.Board, flags : dict):
     print("Rules:")
     print("Double entry from start allowed on roll 6:", current_board.rule_double_entry_on_six)
     print("New roll allowed after roll 6:", current_board.rule_new_roll_on_six)
+
+def cmd_ml_generate_data(current_board: board.Board, flags : dict):
+    """ cmd generate_data <gamecount>: generate board->evaluation data for ML 
+    
+    Uses the GenerateDataPlayer to play a bunch of games against random,
+    and saves the data to a file in the end.
+    """
+    if "default" not in flags:
+        error_message("Incorrectly formatted arguments")
+        return
+
+    import ml_player
+
+    gendata_player = ml_player.GenerateDataPlayer()
+    players = [gendata_player, player.RandomPlayer(), player.RandomPlayer(), player.RandomPlayer()]
+
+    new_flags = {"swap": None}
+
+    play_count = int(flags["default"][0])
+    play_games(current_board, new_flags, players, play_count, 0)
+
+    gendata_player.save_data_to_file("data")
+
 
 def error_message(reason):
     """Support function for logging error messages related to functions"""

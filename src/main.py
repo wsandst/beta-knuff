@@ -6,6 +6,7 @@ import player
 import mct_player
 if config.ENABLE_ML_PLAYER:
     import ml_player
+
 from commands import *
 from typing import Union
 
@@ -86,16 +87,17 @@ def main():
     add_command(["pass", "skip"], lambda: cmd_pass(main_board, flags))
     add_command(["moves", "mvs"], lambda: cmd_moves(main_board, flags))
     add_command(["play", "run", "p"], lambda: cmd_play(main_board, flags, players))
-    add_command("performance", lambda: cmd_performance_test(main_board, flags))
+    #add_command("performance", lambda: cmd_performance_test(main_board, flags))
     add_command("perft", lambda: cmd_perft(main_board, flags))
     add_command("rules", lambda: cmd_rules(main_board, flags))
     add_command("eval", lambda: cmd_eval(main_board, flags))
+    if config.ENABLE_ML_PLAYER:
+        add_command(["generatedata", "gendata", "gd"], lambda: cmd_ml_generate_data(main_board, flags))
 
     # Registering player types and their corresponding classes
     add_player(["random", "rand", "r"], lambda: player.RandomPlayer("Random"))
     add_player(["randomtake", "randtake", "rt", "rtake"], lambda: player.RandomTakePlayer("RandomTake"))
     add_player(["rulebased", "rb", "ruleb"], lambda: player.RuleBasedPlayer("RuleBased"))
-    add_player(["rulebased2", "rb2", "ruleb2"], lambda : player.RuleBasedPlayer2("RuleBased2"))
     add_player(["human", "h", "manual"], lambda: player.HumanPlayer("Human"))
     add_player(["empty", "none", "e", "n"], lambda: player.EmptyPlayer("None"))
     add_player(["minmax", "mm"], lambda: player.MinMaxPlayer("MinMax"))
