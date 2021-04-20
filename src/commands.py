@@ -4,6 +4,9 @@ import board, graphics, move, player
 import copy, random, time, multiprocessing
 import cProfile
 import config
+if config.ENABLE_ML_PLAYER:
+    import ml_model
+    import ml_player
 
 
 #List of commands
@@ -251,6 +254,7 @@ def play_games(current_board: board.Board, flags : dict, players, play_count: in
 
     swap = "swap" in flags
     rankings = "rank" in flags
+    skip_single_moves = "ssm" in flags
     place = 0
 
     start = time.time()
@@ -284,8 +288,9 @@ def play_games(current_board: board.Board, flags : dict, players, play_count: in
             if "mn" in flags:
                 if input() == "exit":
                     return
-
-            if len(moves) > 0:
+            if skip_single_moves and len(moves) == 1:
+                current_board.move(moves[0])
+            elif len(moves) > 0:
                 mv = players[current_board.active_player-1].play(current_board, moves)
                 if mv == None: #Player decides to skip turn
                     current_board.progress_turn()
@@ -401,21 +406,47 @@ def cmd_ml_generate_data(current_board: board.Board, flags : dict):
     Uses the GenerateDataPlayer to play a bunch of games against random,
     and saves the data to a file in the end.
     """
+    play_count = 0
+    filename = "data"
     if "default" not in flags:
         error_message("Incorrectly formatted arguments")
         return
+    if isinstance(flags["default"], str):
+        play_count = int(flags["default"])
+    else:
+        play_count = int(flags["default"][0])
+        filename = flags["default"][1]
 
-    import ml_player
+    print("Generating input/output data using GenDataPlayer and x3 RandomPlayer games")
 
     gendata_player = ml_player.GenerateDataPlayer()
     players = [gendata_player, player.RandomPlayer(), player.RandomPlayer(), player.RandomPlayer()]
 
-    new_flags = {"swap": None}
+    new_flags = {}#{"swap": None}
 
-    play_count = int(flags["default"][0])
     play_games(current_board, new_flags, players, play_count, 0)
 
-    gendata_player.save_data_to_file("data")
+    gendata_player.save_data_to_file(f"models/{filename}")
+    print(f"Data generation complete and saved to models/{filename}_inputs.txt and models/{filename}_outputs.txt.")
+
+def cmd_ml_train(current_board : board.Board, flags):
+    filename = "data"
+    if "default" in flags and isinstance(flags["default"], str):
+        filename = flags["default"]
+
+    print("Training ML Model on saved input/output data")
+    
+    ml_player1 = ml_player.MLPlayer("MLPlayer")
+    ml_player1.model.train(filename)
+
+    print("Model trained.")
+
+def cmd_ml_load_model(current_board : board.Board, flags):
+    if "default" not in flags:
+        error_message("Incorrectly formatted arguments")
+        return
+    
+    ml_model.load_model(flags["default"])
 
 
 def error_message(reason):

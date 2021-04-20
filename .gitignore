@@ -5,6 +5,7 @@ __pycache__/
 *.pyc
 
 .vscode
+models/
 
 # C extensions
 *.so

@@ -5,6 +5,8 @@ from board import Board
 import player
 import mct_player
 if config.ENABLE_ML_PLAYER:
+    import logging
+    logging.getLogger("tensorflow").setLevel(logging.WARNING)
     import ml_player
 
 from commands import *
@@ -93,11 +95,15 @@ def main():
     add_command("eval", lambda: cmd_eval(main_board, flags))
     if config.ENABLE_ML_PLAYER:
         add_command(["generatedata", "gendata", "gd"], lambda: cmd_ml_generate_data(main_board, flags))
+        add_command(["trainmodel", "train", "tr"], lambda: cmd_ml_train(main_board, flags))
+        add_command(["loadmodel", "lm"], lambda: cmd_ml_load_model(main_board, flags))
 
     # Registering player types and their corresponding classes
     add_player(["random", "rand", "r"], lambda: player.RandomPlayer("Random"))
     add_player(["randomtake", "randtake", "rt", "rtake"], lambda: player.RandomTakePlayer("RandomTake"))
+    add_player(["firstmove", "fm"], lambda: player.RandomPlayer("FirstMove"))
     add_player(["rulebased", "rb", "ruleb"], lambda: player.RuleBasedPlayer("RuleBased"))
+    add_player(["normrulebased", "nrb", "nruleb"], lambda: player.NormRuleBasedPlayer("NormRuleBased"))
     add_player(["human", "h", "manual"], lambda: player.HumanPlayer("Human"))
     add_player(["empty", "none", "e", "n"], lambda: player.EmptyPlayer("None"))
     add_player(["minmax", "mm"], lambda: player.MinMaxPlayer("MinMax"))

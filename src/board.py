@@ -282,7 +282,8 @@ class Board:
         """ Generates a compact floating point representation of the board 
             Used for neural networks """
         output = [0.0] * (40*2+4+4+1)
-        output[0] = (self.active_player - 1) / 3
+        #output[0] = self.exit_counts[0] / 4
+        #output[0] = (self.active_player - 1) / 3
         output[1] = self.start_counts[0] / 4
         output[2] = self.start_counts[1] / 4
         output[3] = self.start_counts[2] / 4
