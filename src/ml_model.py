@@ -12,15 +12,14 @@ import board
 input_size = (40)*2+4+4+1
 
 loaded_model = None
-
-def load_model(filename):
-    loaded_model = keras.models.load_model(f"models/{filename}_model")
+model_name = "None"
 
 class Model:
-    def __init__(self):
-        if loaded_model == None:
+    def __init__(self, model_name):
+        if model_name == None:
             # Initialize neural network
             self.model = Sequential()
+            self.model_name = "NewModel"
 
             # Add first hidden layer (and input layer)
             self.model.add(Dense(units=input_size, kernel_initializer='uniform', activation='relu', input_dim=input_size))
@@ -33,7 +32,11 @@ class Model:
 
             self.model.compile(optimizer='adam', loss='mse')
         else:
-            self.model = loaded_model
+            self.load_model(model_name)
+
+    def load_model(self, filename):
+        self.model = keras.models.load_model(f"models/{filename}_model")
+        self.model_name = filename
 
     def train(self, data_filename):
         print("Starting Keras model training.")

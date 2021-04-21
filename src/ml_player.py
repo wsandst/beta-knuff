@@ -52,11 +52,11 @@ class GenerateDataPlayer(NormRuleBasedPlayer):
 
 class MLPlayer(Player):
     """Player which uses a neural network evaluation function """
-    def __init__(self, name = "Unspecified"):
+    def __init__(self, name = "Unspecified", model_filename = None):
         self.name = name
         self.win_count = [0,0,0,0]
         self.has_won = False
-        self.model = ml_model.Model()
+        self.model = ml_model.Model(model_filename)
 
     def eval(self, board):
         np_input = np.array([board.generate_compact_repr()], dtype=np.float32)

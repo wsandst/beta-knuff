@@ -151,6 +151,7 @@ def get_player_classes(flags : dict, player_dict : dict):
     """Helper class for cmd play. Returns the classes representing the players based
     on the inputted player flags
     """
+
     arg_count = len(flags["default"]) 
     players = [0]*4
     if arg_count == 1:
@@ -430,6 +431,7 @@ def cmd_ml_generate_data(current_board: board.Board, flags : dict):
     print(f"Data generation complete and saved to models/{filename}_inputs.txt and models/{filename}_outputs.txt.")
 
 def cmd_ml_train(current_board : board.Board, flags):
+    """ cmd train [filename] : train the machine learning model on a data file ("data" is default) """
     filename = "data"
     if "default" in flags and isinstance(flags["default"], str):
         filename = flags["default"]
@@ -441,12 +443,21 @@ def cmd_ml_train(current_board : board.Board, flags):
 
     print("Model trained.")
 
-def cmd_ml_load_model(current_board : board.Board, flags):
+def cmd_ml_load_model(current_board : board.Board, flags, player_dict):
+    """ cmd loadmodel <filename> : load a machine learning model from file into MLPlayer """
     if "default" not in flags:
         error_message("Incorrectly formatted arguments")
         return
+    model_name = flags["default"]
+    try:
+        player_dict["ml"] = lambda: ml_player.MLPlayer("MachineLearning", model_name)
+        player_dict["machinelearning"] = lambda: ml_player.MLPlayer("MachineLearning", model_name)
+        player_dict["nn"] = lambda: ml_player.MLPlayer("MachineLearning", model_name)
+    except:
+        error_message("The specified ML model does not exist")
+        return
     
-    ml_model.load_model(flags["default"])
+    print(f"Loaded model {model_name} into MLPlayer")
 
 
 def error_message(reason):
