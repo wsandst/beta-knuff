@@ -21,6 +21,10 @@ class GenerateDataPlayer(NormRuleBasedPlayer):
         for i, mv in enumerate(moves):
             current_board.move(mv)
             score = self.eval(current_board)[self.player-1]
+
+            GenerateDataPlayer.recorded_inputs.append(current_board.generate_compact_repr())
+            GenerateDataPlayer.recorded_outputs.append([score])
+
             current_board.unmove(mv)
 
             if score >= best_score:
@@ -28,9 +32,9 @@ class GenerateDataPlayer(NormRuleBasedPlayer):
                 best_index = i
 
         # Record data
-        GenerateDataPlayer.recorded_inputs.append(current_board.generate_compact_repr())
-        score = self.eval(current_board)[self.player-1]
-        GenerateDataPlayer.recorded_outputs.append([score])
+        #GenerateDataPlayer.recorded_inputs.append(current_board.generate_compact_repr())
+        #score = self.eval(current_board)[self.player-1]
+        #GenerateDataPlayer.recorded_outputs.append([score])
 
         return moves[best_index]
 
