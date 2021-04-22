@@ -4,7 +4,6 @@ import math
 import numpy as np
 
 
-
 class GenerateDataPlayer(NormRuleBasedPlayer):
     recorded_outputs = []
     recorded_inputs = []
