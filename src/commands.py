@@ -58,13 +58,19 @@ def cmd_reset(current_board : board.Board, flags : dict):
 def cmd_roll(current_board : board.Board, flags : dict):
     """cmd roll [-f roll]. Display the current roll. Force it to a specific roll with -f"""
     if "f" in flags:
+        roll = try_convert_to_int(flags["f"])
+        if roll is None:
+            return
         current_board.roll = int(flags["f"])
     print("Roll: {}".format(current_board.roll))
 
 def cmd_turn(current_board : board.Board, flags : dict):
     """cmd: turn [-f turn]. Display the current turn or force it to a certain turn with -f"""
     if "f" in flags:
-        current_board.active_player = int(flags["f"])
+        turn = try_convert_to_int(flags["f"])
+        if turn is None:
+            return
+        current_board.active_player = turn
     print("Turn: {}".format(current_board.active_player))
 
 def cmd_help(flags : dict):
@@ -209,11 +215,16 @@ def cmd_play(current_board: board.Board, flags : dict, player_dict : dict):
     # Set the total player count based on flag -p
     current_board.player_count = 4
     if "p" in flags:
-        current_board.player_count = int(flags["p"])
+        player_count = try_convert_to_int(flags["p"])
+        if player_count is None:
+            return
+        current_board.player_count = player_count
 
     # Set game count based on flag -c
     if "c" in flags:
-        play_count = int(flags["c"])
+        play_count = try_convert_to_int(flags["c"])
+        if play_count is None:
+            return
 
     global result
     result = [0, 0, 0, 0]
@@ -347,7 +358,9 @@ def play_games(current_board: board.Board, flags : dict, players, play_count: in
 def cmd_perft(current_board: board.Board, flags : dict):
     """cmd: perft <depth>. Generates a tree of all valid moves with all valid rolls and counts
     leaf nodes"""
-    depth_in = int(flags["default"])
+    depth_in = try_convert_to_int(flags["default"])
+    if depth_in is None:
+        return
     random.seed(1)
     work_board = copy.deepcopy(board)
     def testPerf(board, depth):
@@ -473,3 +486,10 @@ def cmd_ml_load_model(current_board : board.Board, flags, player_dict):
 def error_message(reason):
     """Support function for logging error messages related to functions"""
     print("Command failure: {}. Please try again.".format(reason))
+
+def try_convert_to_int(num):
+    if num.isdigit():
+        return int(num)
+    else:
+        error_message("Failed to convert argument to integer")
+        return None
