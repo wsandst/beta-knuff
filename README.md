@@ -12,6 +12,7 @@ Multiple (count) games of selfplay: `play random -c [COUNT]`
 Selfplay of RuleBased, Random x3: `play rulebased random`  
 Selfplay of Rulebased, Random: `play rulebased random -p 2`  
 Rotate the player starting position between games to give a fairer end result: `play randomtake -c 100 -swap`  
+Use multithreading to improve simulation performance: `play r -c 1000000 -mt`  
 
 **Implemented Player types (agents):** 
 * **Human** - takes human input to decide move. flag -d recommended to be able to see board.

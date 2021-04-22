@@ -28,6 +28,8 @@ play: Plays the game with the selected players. -mn for manual input between tur
 -c to repeat game count times. -o removes all extra checks, will break other flags, -p specifies how many players. 
 -nm for disabling multithreading
 Players available: random, randomtake, rulebased, human, empty (no player)
+Machine learning related:
+
 """
 
 #This module adds commands for the command parser in main
@@ -174,13 +176,18 @@ def get_player_classes(flags : dict, player_dict : dict):
 
 def cmd_play(current_board: board.Board, flags : dict, player_dict : dict):
     """cmd: play <player1> <player2/3/4> [player3/4] [player4] [-c count] [-o]
-    [-p playercount] [-swap] 
+    [-p playercount] [-swap] [-mt] [-ssm] [-mn] [-d] [-rank]
     
-    Play cmd which simulates a game with the inputted player types. Supports running multiple
-    games in a row with flag -c. -p allows to specify how many players should play, up to 4. -swap
-    rotates the player starting positions between games to remove starting bias.
+    Play cmd which simulates a game with the inputted player types. Flags:
+    -c [count] runs multiple games in a row
+    -p allows to specify how many players should play, up to 4. 
+    -swap rotates the player starting positions between games to remove starting bias.
+    -mt uses multithreading to improve performance
+    -ssm makes single moves automatically for players, saving performance
+    -d displays the board between every turn
     -rank keeps playing the games after the first player has won to get total rankings.
-    -m waits for manual input between turns.
+    -mn waits for manual input between turns.
+    -
     """
     if "default" in flags and isinstance(flags["default"], str):
         flags["default"] = [flags["default"]]
@@ -207,8 +214,8 @@ def cmd_play(current_board: board.Board, flags : dict, player_dict : dict):
     global result
     result = [0, 0, 0, 0]
 
-    # Do not do multithreading on flag -nm
-    if "nm" in flags:
+    # Do multithreading with flag mt
+    if "mt" not in flags:
         board_list = [current_board]
         players_list = [players]
         play_games(current_board, flags, players, play_count, 1)
@@ -235,7 +242,6 @@ def cmd_play(current_board: board.Board, flags : dict, player_dict : dict):
             break
         print("Player {}: {} wins ({})\t{}".format(player_count, result[player_count - 1], player.name, sum(result)))     
     """
-
     for player_count, player in enumerate(players, 1):
         if player_count > current_board.player_count:
             break
