@@ -187,7 +187,7 @@ def cmd_play(current_board: board.Board, flags : dict, player_dict : dict):
     -d displays the board between every turn
     -rank keeps playing the games after the first player has won to get total rankings.
     -mn waits for manual input between turns.
-    -
+    -g combines both -swap and -mt
     """
     if "default" in flags and isinstance(flags["default"], str):
         flags["default"] = [flags["default"]]
@@ -195,6 +195,10 @@ def cmd_play(current_board: board.Board, flags : dict, player_dict : dict):
     if "default" not in flags or len(flags["default"]) > 4:
         error_message("The required arguments are missing or are incorrectly formated")
         return
+
+    if "g" in flags:
+        flags["swap"] = None
+        flags["mt"] = None
         
     players = get_player_classes(flags, player_dict)
     if players == None:
