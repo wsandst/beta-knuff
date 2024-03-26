@@ -72,7 +72,7 @@ class RuleBasedPlayer(Player):
         """Evaluate the current position by analyzing the board state with rule-based logic"""
         score = 0
    
-        #Go through the main state and give points based on distance from the exit area
+        # Go through the main state and give points based on distance from the exit area
         for index, piece in enumerate(current_board.board_state):
             player = piece[1]
             if player != 0:
@@ -85,7 +85,7 @@ class RuleBasedPlayer(Player):
                     score -= self.eval_piece(distance_from_exit, count)
                     #score -= self.eval_threats(current_board, index, player)
         
-        #Give 60 points for every piece in the exit state
+        # Give 60 points for every piece in the exit state
         for player, state in enumerate(current_board.exit_states, 1):
             for piece in state:
                 if piece[1] != 0:
@@ -168,6 +168,7 @@ class NormRuleBasedPlayer(Player):
 
     def eval(self, board):
         """Evaluate the current position by analyzing the board state with rule-based logic"""
+        self.exit_squares = [40, 10, 20, 30]
         scores = [0] * 4
         #Go through the main state and give points based on distance from the exit area
         for index, piece in enumerate(board.board_state):
@@ -204,8 +205,6 @@ class NormRuleBasedPlayer(Player):
 
     def play(self, current_board, moves):
         """ Evaluate all the moves and pick the one with the highest eval score"""
-        self.exit_squares = [40, 10, 20, 30]
-
         self.player = current_board.active_player
 
         best_index = 0

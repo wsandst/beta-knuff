@@ -8,6 +8,9 @@ if config.ENABLE_ML_PLAYER:
     import ml_model
     import ml_player
 
+import export
+
+board_eval_exporter = export.BoardEvalExporter()
 
 #List of commands
 command_list = """List of commands for BetaKnuff Development Build:
@@ -182,7 +185,7 @@ def get_player_classes(flags : dict, player_dict : dict):
 
 def cmd_play(current_board: board.Board, flags : dict, player_dict : dict):
     """cmd: play <player1> <player2/3/4> [player3/4] [player4] [-c count] [-o]
-    [-p playercount] [-swap] [-mt] [-ssm] [-mn] [-d] [-rank]
+    [-p playercount] [-swap] [-mt] [-ssm] [-mn] [-d] [-rank] [-e filename]
     
     Play cmd which simulates a game with the inputted player types. Flags:
     -c [count] runs multiple games in a row
@@ -194,6 +197,7 @@ def cmd_play(current_board: board.Board, flags : dict, player_dict : dict):
     -rank keeps playing the games after the first player has won to get total rankings.
     -mn waits for manual input between turns.
     -g combines both -swap and -mt
+    -e keeps track of board states and saves them to json
     """
     if "default" in flags and isinstance(flags["default"], str):
         flags["default"] = [flags["default"]]
@@ -255,7 +259,10 @@ def cmd_play(current_board: board.Board, flags : dict, player_dict : dict):
     for player_count, player in enumerate(players, 1):
         if player_count > current_board.player_count:
             break
-        print("Player {}: {} wins ({})\t{}".format(player_count, result[player_count - 1], player.name, sum(result)))     
+        print("Player {}: {} wins ({})\t{}".format(player_count, result[player_count - 1], player.name, sum(result)))   
+
+    if 'e' in flags:
+        board_eval_exporter.save(flags['e'])  
     """
     for player_count, player in enumerate(players, 1):
         if player_count > current_board.player_count:
@@ -306,6 +313,10 @@ def play_games(current_board: board.Board, flags : dict, players, play_count: in
                 for count, mv in enumerate(moves):
                     attrs = vars(mv)
                     print(count+1, ', '.join("%s: %s" % item for item in attrs.items()))
+
+            if "e" in flags:
+                current_player = players[current_board.active_player-1]
+                board_eval_exporter.track_score(current_board, current_player)
 
             if "mn" in flags:
                 if input() == "exit":
@@ -488,6 +499,9 @@ def error_message(reason):
     print("Command failure: {}. Please try again.".format(reason))
 
 def try_convert_to_int(num):
+    """ Return a string as an integer, or none if the conversion is not possible 
+        Used for error checking
+    """
     if num.isdigit():
         return int(num)
     else:
