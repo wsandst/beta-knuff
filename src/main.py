@@ -3,14 +3,14 @@
 import config
 from board import Board
 import player
-import mct_player
+from players import mct_player, neat_player
 
 # Disable tensorflow logging
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
 
 if config.ENABLE_ML_PLAYER:
-    import ml_player
+    from players import *
 
 from commands import *
 from typing import Union
@@ -96,6 +96,7 @@ def main():
     add_command("perft", lambda: cmd_perft(main_board, flags))
     add_command("rules", lambda: cmd_rules(main_board, flags))
     add_command("eval", lambda: cmd_eval(main_board, flags))
+    add_command(["neattrain", "etrain"], lambda: cmd_neat_train(main_board, flags))
     if config.ENABLE_ML_PLAYER:
         add_command(["generatedata", "gendata", "gd"], lambda: cmd_ml_generate_data(main_board, flags))
         add_command(["trainmodel", "train", "tr"], lambda: cmd_ml_train(main_board, flags))
@@ -111,6 +112,8 @@ def main():
     add_player(["empty", "none", "e", "n"], lambda: player.EmptyPlayer("None"))
     add_player(["minmax", "mm"], lambda: player.MinMaxPlayer("MinMax"))
     add_player(["montecarlo", "mc"], lambda: mct_player.MontePlayer("MonteCarlo"))
+    add_player(["evolutionary", "neat", "ne", "ev"], lambda: neat_player.NeatPlayer("NEAT"))
+
     if config.ENABLE_ML_PLAYER:
         add_player(["genmachinelearning", "gml", "gendata"], lambda: ml_player.GenerateDataPlayer("GenerateData"))
         add_player(["machinelearning", "ml", "nn"], lambda: ml_player.MLPlayer("MachineLearning", "data"))

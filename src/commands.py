@@ -6,9 +6,13 @@ import cProfile
 import config
 if config.ENABLE_ML_PLAYER:
     import ml_model
-    import ml_player
+    import players.ml_player
+
+from players import neat_player
 
 import export
+import neat
+
 
 board_eval_exporter = export.BoardEvalExporter()
 
@@ -493,6 +497,55 @@ def cmd_ml_load_model(current_board : board.Board, flags, player_dict):
     
     print(f"Loaded model {model_name} into MLPlayer")
 
+
+def cmd_neat_train(current_board: board.Board, flags : dict):
+    """ cmd neattrain [filename] : train the machine learning model on a data file ("data" is default) """
+    # Load configuration.
+    config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
+                         neat.DefaultSpeciesSet, neat.DefaultStagnation,
+                         "src/neat/feedfoward.conf")
+
+    # Create the population, which is the top-level object for a NEAT run.
+    p = neat.Population(config)
+
+    # Add a stdout reporter to show progress in the terminal.
+    p.add_reporter(neat.StdOutReporter(True))
+    stats = neat.StatisticsReporter()
+    p.add_reporter(stats)
+    p.add_reporter(neat.Checkpointer(5))
+
+    # Run for up to 300 generations.
+    winner = p.run(lambda genomes, config: neat_eval_genomes(current_board, 1000, genomes, config), 300)
+
+    # Display the winning genome.
+    print('\nBest genome:\n{!s}'.format(winner))
+
+    # Show output of the most fit genome against training data.
+    winner_net = neat.nn.FeedForwardNetwork.create(winner, config)
+    evol_player = neat_player.NeatPlayer("Neat", winner_net)
+    players = [evol_player, player.RandomPlayer(), player.RandomPlayer(), player.RandomPlayer()]
+    wins = play_games(current_board, {}, players, 1000, 0)
+    win_percentage = wins[0] / 1000
+    print(f"Win percentage: {win_percentage}%",)
+
+
+    #p = neat.Checkpointer.restore_checkpoint('neat-checkpoint-4')
+
+def neat_eval_genomes(current_board, play_count, genomes, config):
+    for genome_id, genome in genomes:
+        net = neat.nn.FeedForwardNetwork.create(genome, config)
+        evol_player = neat_player.NeatPlayer("Neat", net)
+        players = [evol_player, player.RandomPlayer(), player.RandomPlayer(), player.RandomPlayer()]
+
+        new_flags = {"swap": None}
+        wins = play_games(current_board, new_flags, players, play_count, 0)
+        win_percentage = (wins[0] / play_count)
+        genome.fitness = (win_percentage - 0.25) ** 2
+        print(f"Genome: {genome_id}, fitness: {genome.fitness}, win percentage: {win_percentage*100}%")
+
+def cmd_neat_load_model(current_board, flags: dict, player_dict):
+    """ cmd neatloadmodel <filename> : load an evolutinary NEAT learning model from file into MLPlayer """
+    pass
 
 def error_message(reason):
     """Support function for logging error messages related to functions"""

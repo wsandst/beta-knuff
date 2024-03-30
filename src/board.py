@@ -48,6 +48,7 @@ class Board:
         #Standard rules
         self.rule_double_entry_on_six = False
         self.rule_new_roll_on_six = False
+        self.compact_repr = [0] * (640 + 64 + 16 + 16)
 
     def move(self, mv: Move):
         """ Perform move mv. Move pieces, increment counters etc"""
@@ -296,3 +297,27 @@ class Board:
             output[i*2+9+0] = player / 4
             output[i*2+9+1] = count / 4
         return output
+    
+    def generate_compact_repr_hot(self):
+        for index, (count, player) in enumerate(self.board_state):
+            while count > 0:
+                count -= 1
+                self.compact_repr[index*4*4 + (player-1)*4 + count] = 1
+
+        for player, state in enumerate(self.exit_states):
+            for index, (_, count) in enumerate(state):
+                while count > 0:
+                    count -= 1
+                    self.compact_repr[640 + player*4*4 + index*4 + count] = 1
+
+        for index, count in enumerate(self.exit_counts):
+            while count > 0:
+                count -= 1
+                self.compact_repr[640 + 64 + index*4 + count] = 1
+
+        for index, count in enumerate(self.start_counts):
+            while count > 0:
+                count -= 1
+                self.compact_repr[640 + 64 + 16 + index*4 + count] = 1
+
+        return self.compact_repr
